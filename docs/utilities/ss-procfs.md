@@ -2,7 +2,8 @@
 
 Для того, чтобы понять к каким файлам обращается утилита ss, воспользуемся strace:
 
-![](RackMultipart20231225-1-ig4xnq_html_803e5c8fa94ec186.png)
+![image](https://github.com/Saeshnikov/Linux-monitoring-utility/assets/117933964/266fd3bd-829f-41e4-8516-b1b6225edcd7)
+
 
 Файлы proc/, которые использует ss:
 
