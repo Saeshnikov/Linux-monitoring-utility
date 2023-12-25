@@ -2,7 +2,8 @@
 
 Для того, чтобы понять к каким файлам обращается утилита lsof, воспользуемся strace:
 
-![](RackMultipart20231225-1-8h1dln_html_33d2b38bd1cd45a1.png)
+![image](https://github.com/Saeshnikov/Linux-monitoring-utility/assets/117933964/8a1b461c-71a0-47d1-979d-e10a1127d907)
+
 
 Утилита lsof обращается ко многим файлам /proc, но главное, что нас интересует в данном проекте – это файл /proc/fdinfo.
 
