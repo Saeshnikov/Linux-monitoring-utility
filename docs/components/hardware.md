@@ -10,6 +10,12 @@
 | ----- | ------ | ------ | ------ | ------ |
 | 2.1 | Процент использования | glances (json):</br>curl http://localhost:61208/api/3/mem</br>{"percent": 75.0} | В случае оптимизации производительности системы Linux оперативная память - один из важных факторов | |
 | 2.2 | Общая доступная физическая память | glances (json):</br>curl http://localhost:61208/api/3/mem</br>{"total": 7836184576}</br></br>nmon</br>nmon(.nmon(формат csv))</br>nmon -f -s 5 -c 720</br>-f - запись в файл</br>-s <кол-во снимков></br>-с <интервал></br>Вывод: </br>nmon выводит следующие данные по памяти в соответствующем порядке: memtotal,hightotal,lowtotal,swaptotal,memfree,highfree,lowfree,swapfree,memshared,cached,active,bigfree,buffers,swapcached,inactive</br>Результаты каждого снимка записываются в полях MEM, T0001(номер снимка)</br>Поле memtotal(1) | Общая характеристика | |
-| 2.3 | Память, которая не используется (обнулена) и доступна новым процессам | nmon</br>Поле memfree(5)</br></br>glances (json):</br>curl http://localhost:61208/api/3/mem</br>{"free": 1962663936} | 
+| 2.3 | Память, которая не используется (обнулена) и доступна новым процессам | nmon</br>Поле memfree(5)</br></br>glances (json):</br>curl http://localhost:61208/api/3/mem</br>{"free": 1962663936} | Для лучшего понимания взаимодействия процессов и памяти ||
+| 2.4 | Используемая память | glances (json):</br># curl http://localhost:61208/api/3/mem</br>{"used": 5873520640} |^||
+| 2.5 | Память, используемая в данный момент или использовавшаяся совсем недавно | glances (json):</br># curl http://localhost:61208/api/3/mem</br>{"active": 3130548224}</br></br>nmon</br>Поле active(12) |^||
+| 2.6 | Память, помеченная как неиспользуемая | glances (json):</br># curl http://localhost:61208/api/3/mem</br>{"inactive": 3094474752}</br></br>nmon</br>Поле inactive(16) |^||
+| 2.7 | Буферы | glances (json):</br># curl http://localhost:61208/api/3/mem</br>{"buffers": 142680064}</br></br>nmon</br>Поле buffers(14) |^||
+| 2.8 | Кэш | glances (json):</br># curl http://localhost:61208/api/3/mem</br>{"cached": 2079936512}</br></br>nmon</br>Поле Cached(11) |^||
+
 
 
