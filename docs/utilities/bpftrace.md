@@ -173,7 +173,7 @@ sudo bpftrace -l 'uprobe:/home/eax/pginstall/bin/postgres:*'
 |tools/cpuwalk.bt: | пример того, какие процессоры выполняют данные процессы |
 |tools/dcsnoop.bt:  | поиск в кэше записей каталогов трассировки (dcache) | 
 |tools/execsnoop.bt: | трассировка новых процессов с помощью системных вызовов exec(); |
-|tools/gethostlatency.bt: | Показывает задержку для вызовов  getaddrinfo/gethostbyname |
+|tools/gethostlatency.bt: | Показывает задержку для вызовов  getaddrinfo/gethostbyname, путем определения имени удаленного хоста, поиск которого был медленным и насколько |
 |tools/naptime.bt: | Показывать добровольные вызовы режима сна |
 |tools/opensnoop.bt: | Отслеживание системных вызовов open() с отображением имен файлов к которым они обращаются |
 |tools/pidpersec.bt: | Подсчитывать новые процессы (через fork) |
@@ -181,6 +181,7 @@ sudo bpftrace -l 'uprobe:/home/eax/pginstall/bin/postgres:*'
 |tools/syscount.bt: | Подсчет системных вызовов |
 |tools/tcpaccept.bt: | Отслеживание пассивных соединений TCP (accept()) |
 |tools/tcpconnect.bt: | Отслеживание активных соединений TCP (connect()) |
+|tools/tcpdrop.bt: | Этот инструмент отслеживает TCP-пакеты или сегменты, которые были отброшены ядром, и показывает подробную информацию из заголовков IP и TCP, состояния сокета и трассировки стека ядра |
 |tools/tcplife.bt: | Отслеживание продолжительности сеанса TCP с указанием сведений о подключении |
 
 ***Пример использования `syscount`***
