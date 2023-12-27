@@ -154,7 +154,7 @@ tcpdump [options] [expression]
 Чтобы открыть ранее сохраненные данные из файла PCAP —опция **-r** и имя файла.
 
 
-**Сравнение с утилитой procfs.**
+**Сравнение утилиты с procfs.**
 
 ![image](https://github.com/Saeshnikov/Linux-monitoring-utility/assets/117933964/749a20c7-02d6-4cdb-93f1-3cc87edff1f5)
 
