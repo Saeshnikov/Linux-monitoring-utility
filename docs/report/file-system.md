@@ -3,7 +3,7 @@
 | :---: | --- | --- | --- |
 | Вывод информации о том, какие файлы используются теми или иными процессами | bpftrace-сценарий [fsorw.bt](#fsorw.bt) <br> В качестве ключевой будет выводиться следующая информация: <br>- pid процесса <br>- команда <br>- файловые дескрипторы <br>- флаги режима открытия файла `16ссч` <br>- файл <br>- кол-во считанных байт <br>- кол-во записанных байт|В рамках проекта самый высокий приоритет отдается отслеживанию различного рода взаимодействий как между процессами, так и с операционной системой, поэтому необходимо знать, какие процессы в какие файлы пишут и из каких читают. | Среди возможных вариантов рассмотривалась так же утилита `lsof`, однако выводимая через неё информация содержит избыточные элементы и подлежит фильтрации, помимо этого кол-во прочитанных/записанных байт придётся отслеживать дополнительно. <br> Обращение к информации из системных вызовов с помощью `bpftrace`-сценарии - наиболее удобный инструмент сбора данного пункта мониторинга. |
 | Общее кол-во записанных и прочитанных байт процессом | `bpftrace -e 'tracepoint:syscalls:sys_exit_write /args->ret/ { @[comm] = sum(args->ret); }'` <br> Информация выводится в формате: [command]: {кол-во байт} | Общая информация о том, как много процесс потребляет ресурсов может быть актуальна в рамках мониторинга и сбора статистики для финального отчета. | Однострочный `bpftrace`-сценарий - простое и удобное средство для сбора статистики, список которой, сразу отсортирован в порядке возрастания.|
-| Список из 10-20 файлов, которые чаще всего используются процессами | ???bpftrace-сценарий | Актуально в рамках рассмотрения нагрузки на файловую ситсему и сбра статистки по взаимодействиям между ней и процессами. | --- |
+| Список из 10-20 файлов, которые чаще всего используются процессами | bpftrace-сценарий [topfiles.bt](#topfiles.bt) <br> Выводит файл и кол-во обращений к нему. | Актуально в рамках рассмотрения нагрузки на файловую ситсему и сбра статистки по взаимодействиям между ней и процессами. | Единственный и самый простой способ выводить файлы, отсорированные по возрастанию колличества обращений к ним. |
 
 В рамках рассмотрения IPC, FS будет нас интересовать только с точки зрения взаимодействий с ней различных процессов, а именно: 
    *	какие файлы открывает процесс;
@@ -149,3 +149,53 @@ Attaching 1 probe...
 @[lsof]: 6296840
 ```
 
+## topfiles.bt ##
+```
+BEGIN
+{
+	printf("Tracing file system syscalls... Hit Ctrl-C to end.\n");
+}
+
+tracepoint:syscalls:sys_enter_open,
+tracepoint:syscalls:sys_enter_openat
+{
+	@filename[str(args.filename)] = count();
+}
+
+
+END
+{
+	printf("\nTop 20 files :\n");
+	print(@filename, 20);
+	clear(@filename);
+}
+```
+
+```
+Example output:
+ocalhost:/home/anna # bpftrace /home/anna/Desktop/bpftrace/topfiles.bt
+Attaching 4 probes...
+Tracing file system syscalls... Hit Ctrl-C to end.
+^C
+Top 20 files :
+@filename[/home/anna/.local/share/RecentDocuments/bpftrace[5].desktop]: 23
+@filename[/proc/1651/cmdline]: 25
+@filename[/home/anna/.local/share/RecentDocuments/fsopen.bt[3].desktop]: 26
+@filename[/proc/sys/kernel/random/boot_id]: 27
+@filename[/var/lib/dbus/machine-id]: 27
+@filename[/home/anna/.local/share/RecentDocuments/fsorw.bt[3].desktop]: 28
+@filename[/run/user/1000/xauth_jrgNiT]: 33
+@filename[/home/anna/.local/share/RecentDocuments/bpftrace[2].desktop]: 34
+@filename[/home/anna/.local/share/RecentDocuments/bpftrace[4].desktop]: 34
+@filename[/home/anna/.local/share/RecentDocuments/topfiles.bt.desktop]: 37
+@filename[/home/anna/.local/share/RecentDocuments/fsorw.bt[2].desktop]: 38
+@filename[/home/anna/.local/share/RecentDocuments/fsorw.bt.desktop]: 40
+@filename[/home/anna/.local/share/RecentDocuments/lsof.c.desktop]: 41
+@filename[/sys/fs/cgroup/unified/user.slice/user-1000.slice/user@1000.ser]: 44
+@filename[/home/anna/.local/share/RecentDocuments/bpftrace[3].desktop]: 44
+@filename[/run/mount/utab]: 46
+@filename[/home/anna/.local/share/RecentDocuments/bpftrace.desktop]: 46
+@filename[/proc/self/mountinfo]: 51
+@filename[/home/anna/.local/share/RecentDocuments]: 57
+@filename[/etc/ld.so.cache]: 77
+```
