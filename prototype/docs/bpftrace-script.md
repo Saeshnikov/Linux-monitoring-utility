@@ -22,7 +22,8 @@ tracepoint:syscalls:sys_enter_openat,
 tracepoint:syscalls:sys_enter_execve,
 tracepoint:syscalls:sys_enter_execveat,
 tracepoint:syscalls:sys_enter_openat2,
-tracepoint:syscalls:sys_enter_open_tree
+tracepoint:syscalls:sys_enter_open_tree,
+tracepoint:syscalls:sys_enter_statx
 /@oldname[tid]/
 {
 	@filename[str(@oldname[tid])] = count();
