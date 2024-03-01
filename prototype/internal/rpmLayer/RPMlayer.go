@@ -1,4 +1,4 @@
-package RPMlayer
+package RPMAnalysis
 
 import (
 	"bufio"

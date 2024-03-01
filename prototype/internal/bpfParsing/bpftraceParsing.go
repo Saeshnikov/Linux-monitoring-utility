@@ -1,4 +1,4 @@
-package bpftraceParsing
+package bpfParsing
 
 import (
 	"bufio"
