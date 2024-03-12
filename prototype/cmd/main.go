@@ -20,7 +20,7 @@ func main() {
 	}
 
 	bpfScriptFile := bpfScript.GenerateBpfScript(syscalls)
-	taskExecution.StartTasks(bpftrace_time, bpfScriptFile.Name(), toRun, toAnalyse)
+	taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun)
 }
 
 func toRun(bpfTime int, fileName string) *os.File {
@@ -37,14 +37,16 @@ func toRun(bpfTime int, fileName string) *os.File {
 	procAttr.Files = []*os.File{os.Stdin, file, os.Stderr}
 
 	// Запуск bpftrace
+	fmt.Printf("Script started...\n")
 	if process, err := os.StartProcess(cmdToRun, args, procAttr); err != nil {
 		fmt.Printf("ERROR Unable to run %s: %s\n", cmdToRun, err.Error())
 	} else {
 		fmt.Printf("%s running as pid %d\n", cmdToRun, process.Pid)
-		time.Sleep(time.Duration(bpfTime) * time.Second / 10) // скрипт перезапускается 10 раз
+		time.Sleep(time.Duration(bpftrace_time) * time.Second)
 		process.Signal(os.Interrupt)
+		fmt.Printf("Script stoped...\n")
 	}
-	return file
+	toAnalyse(file)
 }
 
 func toAnalyse(fileForAnalysis *os.File) {
