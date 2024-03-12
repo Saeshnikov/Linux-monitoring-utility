@@ -1,5 +1,12 @@
 package lsofLayer
 
+import (
+	"bufio"
+	"log"
+	"os/exec"
+	"regexp"
+)
+
 func LsofExec() []string {
 	cmd := exec.Command("/usr/bin/lsof")
 	stdout, err := cmd.StdoutPipe()
