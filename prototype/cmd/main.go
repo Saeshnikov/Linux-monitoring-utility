@@ -9,7 +9,6 @@ import (
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
-	"regexp"
 	"time"
 )
 
@@ -50,12 +49,10 @@ func toAnalyse(fileForAnalysis *os.File) {
 
 	defer os.Remove(fileForAnalysis.Name())
 
-	r, err := regexp.Compile(`@filename\[(.*?)\]`)
+	res, err := bpfParsing.Parse(fileForAnalysis.Name())
 	if err != nil {
 		log.Fatal(err)
 	}
-	res := bpfParsing.Parse(r, fileForAnalysis.Name())
-
 	//Через rpm -qf проверяем относится ли файл к rpm пакету
 	RPMAnalysis.RPMlayer(res)
 }
