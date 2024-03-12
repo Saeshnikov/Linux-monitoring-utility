@@ -14,10 +14,12 @@ import (
 )
 
 func main() {
-	var bpftrace_time int
-	var syscalls []string
+	bpftrace_time, program_time, syscalls, err := config.ConfigRead()
 
-	bpftrace_time, syscalls = config.ConfigRead()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	bpfScriptFile := bpfScript.GenerateBpfScript(syscalls)
 	taskExecution.StartTasks(bpftrace_time, bpfScriptFile.Name(), toRun, toAnalyse)
 }
