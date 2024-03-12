@@ -2,25 +2,24 @@ package lsofLayer
 
 import (
 	"bufio"
-	"log"
 	"os/exec"
 	"regexp"
 )
 
-func LsofExec() []string {
+func LsofExec() ([]string, error) {
 	cmd := exec.Command("/usr/bin/lsof")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	outScanner := bufio.NewScanner(stdout)
 	var arr []string
 	r, err := regexp.Compile(`^.{110}(/.*?)$`)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	for outScanner.Scan() {
 		res := r.FindAllStringSubmatch(outScanner.Text(), -1)
@@ -29,5 +28,5 @@ func LsofExec() []string {
 
 		}
 	}
-	return arr
+	return arr, nil
 }
