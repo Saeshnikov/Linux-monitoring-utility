@@ -1,105 +1,80 @@
-package RPMAnalysis
+package RPMlayer
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/gob"
-	"log"
 	"os"
 	"os/exec"
 )
 
-func RPMlayer(usedPackages []string) {
-	allPackages := findAllPackages()
-	findUsedPackages(usedPackages, allPackages)
-	findUnusedPackages(allPackages)
-}
-
-func findAllPackages() map[string]int {
-	var allPackages map[string]int
-	mCache, err := os.Open("m_cache")
-	if err == nil {
-		d := gob.NewDecoder(mCache)
-		// Decoding the serialized data
-		err = d.Decode(&allPackages)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		allPackages = make(map[string]int)
-		cmd := exec.Command("/usr/bin/rpm", "-qa")
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := cmd.Start(); err != nil {
-			log.Fatal(err)
-		}
-		outScanner := bufio.NewScanner(stdout)
-		for outScanner.Scan() {
-			allPackages[outScanner.Text()] = 0
-		}
-
-		b := new(bytes.Buffer)
-		e := gob.NewEncoder(b)
-		// Encoding the map
-		err = e.Encode(allPackages)
-		if err != nil {
-			log.Fatal(err)
-		}
-		mCache, err := os.Create("m_cache")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer mCache.Close()
-		mCache.Write(b.Bytes())
-	}
-	return allPackages
-}
-
-func findUnusedPackages(allPackages map[string]int) {
-	file, err := os.Create("unusedPackages.txt")
+func RPMlayer(usedFiles []string) error {
+	allPackages, err := findAllPackages()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
-	file.WriteString("Not used packages:\n")
-	for key, value := range allPackages {
-		if value == 0 {
-			file.WriteString(key + "\n")
-		}
+	usedPackages, err := findUsedPackages(usedFiles)
+	if err != nil {
+		return err
 	}
+	err_ := findUnusedPackages(allPackages, usedPackages)
+	if err_ != nil {
+		return err_
+	}
+	return nil
 }
 
-func findUsedPackages(usedPackages []string, allPackages map[string]int) {
-	var packageName string
+func findAllPackages() (map[string]bool, error) {
+	var allPackages = make(map[string]bool)
+	cmd := exec.Command("/usr/bin/rpm", "-qa")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	outScanner := bufio.NewScanner(stdout)
+	for outScanner.Scan() {
+		allPackages[outScanner.Text()] = true
+	}
+	return allPackages, nil
+}
 
-	for _, fileName := range usedPackages {
+func findUsedPackages(usedFiles []string) (map[string]bool, error) {
+	var usedPackages = make(map[string]bool)
+	for _, fileName := range usedFiles {
 		cmd := exec.Command("/usr/bin/rpm", "-qf", fileName)
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		if err := cmd.Start(); err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		outScanner := bufio.NewScanner(stdout)
 		outScanner.Split(bufio.ScanWords)
-		cnt := 0
 		for outScanner.Scan() {
-			packageName = outScanner.Text()
-			cnt++
-			if cnt > 1 {
-				break
-			}
-		}
-		if cnt == 1 {
-			if _, ok := allPackages[packageName]; ok {
-				allPackages[packageName]++
-			} else {
-				log.Fatal("Found New Package") //
-			}
+			usedPackages[outScanner.Text()] = true
 		}
 	}
+	return usedPackages, nil
+}
+
+func findUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool) error {
+	file, err := os.Create("unusedPackages.txt")
+	if err != nil {
+		return err
+	}
+
+	for packageName := range usedPackages {
+		if _, ok := allPackages[packageName]; ok {
+			delete(allPackages, packageName)
+		}
+	}
+
+	file.WriteString("Not used packages:\n")
+	for packageName := range allPackages {
+		file.WriteString(packageName + "\n")
+	}
+	return nil
 }
