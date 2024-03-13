@@ -1,0 +1,12 @@
+Syscalls:
+  - execve
+  - execveat
+  - open
+  - openat
+  - openat2
+  - open_tree
+  - statx
+  - fspick
+  - name_to_handle_at
+  - readlink
+  - readlinkat

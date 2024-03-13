@@ -1,19 +1,21 @@
-package bpftraceParsing
+package bpfParsing
 
 import (
 	"bufio"
-	"log"
 	"os"
 	"regexp"
 )
 
-func Parse(r *regexp.Regexp, fileName string) []string {
+func Parse(fileName string) ([]string, error) {
 
 	var arr []string
-
+	r, err := regexp.Compile(`@filename\[(.*?)\]`)
+	if err != nil {
+		return nil, err
+	}
 	file, err := os.Open(fileName)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	fileScanner := bufio.NewScanner(file)
 
@@ -22,10 +24,9 @@ func Parse(r *regexp.Regexp, fileName string) []string {
 		res := r.FindAllStringSubmatch(fileScanner.Text(), -1)
 		if res != nil {
 			arr = append(arr, res[0][1])
-			println(res[0][1])
 		}
-
 	}
 
-	return arr
+	return arr, nil
+
 }
