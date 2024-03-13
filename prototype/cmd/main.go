@@ -5,7 +5,8 @@ import (
 	bpfParsing "linux-monitoring-utility/internal/bpfParsing"
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
-	RPMAnalysis "linux-monitoring-utility/internal/rpmLayer"
+	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
+	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
@@ -19,11 +20,24 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bpfScriptFile := bpfScript.GenerateBpfScript(syscalls)
+	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	arr, err := lsofLayer.LsofExec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = rpmLayer.RPMlayer(arr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun)
 }
 
-func toRun(bpfTime int, fileName string) *os.File {
+func toRun(bpftrace_time int, fileName string) {
 	cmdToRun := "/usr/bin/bpftrace"
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
@@ -50,7 +64,6 @@ func toRun(bpfTime int, fileName string) *os.File {
 }
 
 func toAnalyse(fileForAnalysis *os.File) {
-
 	defer os.Remove(fileForAnalysis.Name())
 
 	res, err := bpfParsing.Parse(fileForAnalysis.Name())
@@ -58,5 +71,5 @@ func toAnalyse(fileForAnalysis *os.File) {
 		log.Fatal(err)
 	}
 	//Через rpm -qf проверяем относится ли файл к rpm пакету
-	RPMAnalysis.RPMlayer(res)
+	rpmLayer.RPMlayer(res)
 }

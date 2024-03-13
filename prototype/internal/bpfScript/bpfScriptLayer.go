@@ -2,8 +2,6 @@ package bpfScriptLayer
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"os"
 	"text/template"
 )
@@ -28,8 +26,8 @@ const (
 
 var (
 	immutablePieces = map[string]string{
-		"BEGIN":  "\n{\n\tprintf(" + `"Tracing file system syscalls... Hit Ctrl-C to end.\n"` + ");\n}\n",
-		"END":    "\n{\n\tprint(@filename);\n\tclear(@oldname);\n\tclear(@filename);\n\tclear(@name);\n\tclear(@fd);\n}",
+		"BEGIN": "\n{\n\tprintf(" + `"Tracing file system syscalls... Hit Ctrl-C to end.\n"` + ");\n}\n",
+		"END":   "\n{\n\tprint(@filename);\n\tclear(@oldname);\n\tclear(@filename);\n\tclear(@name);\n\tclear(@fd);\n}",
 	}
 
 	tmplSimplCom, _ = template.New("SimplCom").Parse("tracepoint:syscalls:sys_enter_{{.SyscallName}}\n{\n\t@filename[str(args.{{.ArgCollected}})] = count();\n}\n")
@@ -48,41 +46,41 @@ type SimpleCommand struct {
 	ArgCollected string
 }
 
-func GenerateBpfScript(commands []string) error {
+func GenerateBpfScript(commands []string) (*os.File, error) {
 	path := "./script.bt"
 	err := createFile(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer file.Close()
 
 	file.WriteString("BEGIN" + immutablePieces["BEGIN"])
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(commands) == 0 {
 		err = makeDefaultScript(file)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		err = makeSpecificScript(file, commands)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	_, err = file.WriteString("END" + immutablePieces["END"])
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//fmt.Println("==> file successful")
-	return err
+	return file, nil
 }
 
 func createFile(path string) error {

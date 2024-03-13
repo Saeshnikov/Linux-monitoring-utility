@@ -1,9 +1,10 @@
-package RPMlayer
+package rpmLayer
 
 import (
 	"bufio"
 	"os"
 	"os/exec"
+	"time"
 )
 
 func RPMlayer(usedFiles []string) error {
@@ -61,7 +62,7 @@ func findUsedPackages(usedFiles []string) (map[string]bool, error) {
 }
 
 func findUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool) error {
-	file, err := os.Create("unusedPackages.txt")
+	file, err := os.CreateTemp(".", time.Now().String())
 	if err != nil {
 		return err
 	}
