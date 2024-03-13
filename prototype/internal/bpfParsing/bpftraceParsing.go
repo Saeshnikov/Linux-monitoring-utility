@@ -24,9 +24,7 @@ func Parse(fileName string) ([]string, error) {
 		res := r.FindAllStringSubmatch(fileScanner.Text(), -1)
 		if res != nil {
 			arr = append(arr, res[0][1])
-			println(res[0][1])
 		}
-
 	}
 
 	return arr, nil

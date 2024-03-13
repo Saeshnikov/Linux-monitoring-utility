@@ -60,9 +60,7 @@ func GenerateBpfScript(commands []string) (*os.File, error) {
 	defer file.Close()
 
 	file.WriteString("BEGIN" + immutablePieces["BEGIN"])
-	if err != nil {
-		return nil, err
-	}
+
 	if len(commands) == 0 {
 		err = makeDefaultScript(file)
 		if err != nil {

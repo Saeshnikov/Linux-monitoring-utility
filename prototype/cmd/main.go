@@ -29,11 +29,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	os.Mkdir("out", os.FileMode(0777))
+
 	err = rpmLayer.RPMlayer(arr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	os.Mkdir("tmp", os.FileMode(0522))
 	taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun)
 }
 
@@ -43,7 +47,7 @@ func toRun(bpftrace_time int, fileName string) {
 	procAttr := new(os.ProcAttr)
 
 	// Создание временного файла для вывода bpftrace
-	file, err := os.CreateTemp(".", "tmp")
+	file, err := os.CreateTemp("./tmp", "tmp")
 	if err != nil {
 		log.Fatal(err)
 	}

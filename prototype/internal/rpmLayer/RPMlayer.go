@@ -62,7 +62,7 @@ func findUsedPackages(usedFiles []string) (map[string]bool, error) {
 }
 
 func findUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool) error {
-	file, err := os.CreateTemp(".", time.Now().String())
+	file, err := os.Create("./out/" + time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		return err
 	}
