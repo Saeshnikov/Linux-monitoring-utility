@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	bpftrace_time, program_time, syscalls, err := config.ConfigRead()
+	bpftrace_time, program_time, syscalls, outputPath, err := config.ConfigRead()
 
 	if err != nil {
 		log.Fatal(err)
@@ -30,14 +30,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	os.Mkdir("out", os.FileMode(0777))
+	if outputPath != "" {
+		os.Mkdir("out", os.FileMode(0777))
+	}
 
 	err = rpmLayer.RPMlayer(arr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	os.Mkdir("tmp", os.FileMode(0522))
+	os.Mkdir("tmp", os.FileMode(0777))
 	taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun)
 }
 
