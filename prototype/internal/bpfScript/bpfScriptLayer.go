@@ -239,7 +239,7 @@ func makeSpecificScript(file *os.File, commands []string) error {
 				tmplSimplCom.Execute(file, mainPieces)
 			}
 		} else {
-			err := errors.New("The system call is not valid.")
+			err := errors.New("The system call '" + com + "' is not valid.")
 			return err
 		}
 	}
