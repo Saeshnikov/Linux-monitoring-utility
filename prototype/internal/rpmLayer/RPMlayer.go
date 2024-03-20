@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func RPMlayer(usedFiles []string) error {
+func RPMlayer(usedFiles []string, dirPath string) error {
 	allPackages, err := findAllPackages()
 	if err != nil {
 		return err
@@ -16,7 +16,7 @@ func RPMlayer(usedFiles []string) error {
 	if err != nil {
 		return err
 	}
-	err_ := findUnusedPackages(allPackages, usedPackages)
+	err_ := findUnusedPackages(allPackages, usedPackages, dirPath)
 	if err_ != nil {
 		return err_
 	}
@@ -61,8 +61,18 @@ func findUsedPackages(usedFiles []string) (map[string]bool, error) {
 	return usedPackages, nil
 }
 
-func findUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool) error {
-	file, err := os.Create("./out/" + time.Now().Format("2006-01-02 15:04:05"))
+func findUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool, dirPath string) error {
+	_, err := os.Stat(dirPath)
+	if os.IsNotExist(err) {
+		err := os.MkdirAll(dirPath, 0700)
+		if err != nil {
+			return err
+		}
+	}
+	// filePath := filepath.Join(dirPath, "/out/")
+	filePath := dirPath + "/out/"
+
+	file, err := os.Create(filePath + time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		return err
 	}
