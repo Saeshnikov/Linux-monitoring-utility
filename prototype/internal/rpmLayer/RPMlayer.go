@@ -62,15 +62,15 @@ func findUsedPackages(usedFiles []string) (map[string]bool, error) {
 }
 
 func findUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool, dirPath string) error {
-	_, err := os.Stat(dirPath)
-	if os.IsNotExist(err) {
-		err := os.MkdirAll(dirPath, 0700)
-		if err != nil {
-			return err
-		}
+	filePath := "./out/"
+	if dirPath != "" {
+		// filePath = filepath.Join(dirPath, "/out/")
+		filePath = dirPath + "/out/"
 	}
-	// filePath := filepath.Join(dirPath, "/out/")
-	filePath := dirPath + "/out/"
+	err = os.MkdirAll(filePath, 0700)
+	if err != nil {
+		return err
+	}
 
 	file, err := os.Create(filePath + time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
