@@ -34,13 +34,13 @@ func main() {
 	}
 }
 
-func toRun(bpftrace_time int, fileName string, outputPath string) {
+func toRun(bpftrace_time uint, fileName string, outputPath string) {
 	cmdToRun := "/usr/bin/bpftrace"
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
 
 	// Создание временного файла для вывода bpftrace
-	file, err := os.CreateTemp("./tmp", "tmp")
+	file, err := os.CreateTemp("tmp/", "tmp")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -11,13 +11,13 @@ type ConfigFile struct {
 	Syscalls []string `yaml:"Syscalls"`
 }
 
-func ConfigRead() (int, int, []string, string, error) {
+func ConfigRead() (uint, uint, []string, string, error) {
 	var config ConfigFile
 
 	//Reading command line arguments
-	scriptTime := flag.Int("t", 3600, "One bpftrace script working time") //BPFtrace script working time
-	programTime := flag.Int("T", 86400, "Program working time")           //Program working time
-	configFileName := flag.String("c", "../configs/defaultConf.yaml", "Path to .yaml config file")
+	scriptTime := flag.Uint("t", 3600, "One bpftrace script working time") //BPFtrace script working time
+	programTime := flag.Uint("T", 86400, "Program working time")           //Program working time
+	configFileName := flag.String("c", "etc/defaultLMUConf.yaml", "Path to .yaml config file")
 	outputPath := flag.String("o", ".", "Path to the result")
 
 	flag.Parse()
