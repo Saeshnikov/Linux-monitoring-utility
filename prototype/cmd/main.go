@@ -39,19 +39,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = exportToJson(outputPath, outputMap)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func toRun(bpftrace_time int, fileName string, outputPath string, outputMap *map[string]bool) {
+func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool) {
 	cmdToRun := "/usr/bin/bpftrace"
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
 
 	// Создание временного файла для вывода bpftrace
-	file, err := os.CreateTemp("tmp/", "tmp")
+	file, err := os.CreateTemp("./tmp/", "tmp")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +93,7 @@ func exportToJson(filePath string, outputMap map[string]bool) error {
 	if err != nil {
 		return err
 	}
-	outputFile, err := os.Create(filePath + "result.json")
+	outputFile, err := os.Create(filePath + "/result.json")
 	if err != nil {
 		return err
 	}
