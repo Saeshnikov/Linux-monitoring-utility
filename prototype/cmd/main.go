@@ -51,7 +51,7 @@ func toRun(bpftrace_time int, fileName string, outputPath string, outputMap *map
 	procAttr := new(os.ProcAttr)
 
 	// Создание временного файла для вывода bpftrace
-	file, err := os.CreateTemp("./tmp", "tmp")
+	file, err := os.CreateTemp("tmp/", "tmp")
 	if err != nil {
 		log.Fatal(err)
 	}
