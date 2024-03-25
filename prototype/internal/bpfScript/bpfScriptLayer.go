@@ -46,8 +46,17 @@ type SimpleCommand struct {
 	ArgCollected string
 }
 
-func GenerateBpfScript(commands []string) (*os.File, error) {
+func GenerateBpfScript(commands []string, dirPath string) (*os.File, error) {
 	path := "./script.bt"
+
+	if dirPath != "" {
+		err := os.MkdirAll(dirPath, 0777)
+		if err != nil {
+			return nil, err
+		}
+		path = dirPath + "/script.bt"
+	}
+	
 	err := createFile(path)
 	if err != nil {
 		return nil, err
@@ -239,7 +248,7 @@ func makeSpecificScript(file *os.File, commands []string) error {
 				tmplSimplCom.Execute(file, mainPieces)
 			}
 		} else {
-			err := errors.New("The system call is not valid.")
+			err := errors.New("The system call '" + com + "' is not valid.")
 			return err
 		}
 	}
