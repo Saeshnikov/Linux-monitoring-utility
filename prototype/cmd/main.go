@@ -24,18 +24,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if outputPath != "" {
+	if outputPath == "" {
 		os.Mkdir("out", os.FileMode(0777))
 	}
 
 	os.Mkdir("tmp", os.FileMode(0777))
-	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun)
+	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, toRun)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func toRun(bpftrace_time int, fileName string) {
+func toRun(bpftrace_time int, fileName string, outputPath string) {
 	cmdToRun := "/usr/bin/bpftrace"
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
@@ -58,10 +58,10 @@ func toRun(bpftrace_time int, fileName string) {
 		process.Signal(os.Interrupt)
 		fmt.Printf("Script stoped...\n")
 	}
-	toAnalyse(file)
+	toAnalyse(file, outputPath)
 }
 
-func toAnalyse(fileForAnalysis *os.File) {
+func toAnalyse(fileForAnalysis *os.File, outputPath string) {
 	defer os.Remove(fileForAnalysis.Name())
 
 	res, err := bpfParsing.Parse(fileForAnalysis.Name())
@@ -69,5 +69,5 @@ func toAnalyse(fileForAnalysis *os.File) {
 		log.Fatal(err)
 	}
 	//Через rpm -qf проверяем относится ли файл к rpm пакету
-	rpmLayer.RPMlayer(res)
+	rpmLayer.RPMlayer(res, outputPath)
 }
