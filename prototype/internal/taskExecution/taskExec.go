@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func StartTasks(program_time int, bpftrace_time int, fileName string, toRun func(int, string)) error {
+func StartTasks(program_time int, bpftrace_time int, fileName string, outputPath string, toRun func(int, string, string)) error {
 
 	var wg sync.WaitGroup
 
@@ -15,7 +15,7 @@ func StartTasks(program_time int, bpftrace_time int, fileName string, toRun func
 
 	bpftrace_run := func() {
 		defer wg.Done()
-		toRun(bpftrace_time, fileName)
+		toRun(bpftrace_time, fileName, outputPath)
 	}
 	wg.Add(1)
 	go bpftrace_run()
@@ -26,7 +26,7 @@ func StartTasks(program_time int, bpftrace_time int, fileName string, toRun func
 		return err
 	}
 
-	err = rpmLayer.RPMlayer(arr)
+	err = rpmLayer.RPMlayer(arr, outputPath)
 	if err != nil {
 		wg.Wait()
 		return err
