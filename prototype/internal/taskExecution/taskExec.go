@@ -1,11 +1,13 @@
 package taskExecution
 
 import (
+	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
+	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	"sync"
 	"time"
 )
 
-func StartTasks(program_time int, bpftrace_time int, fileName string, toRun func(int, string)) {
+func StartTasks(program_time int, bpftrace_time int, fileName string, outputPath string, toRun func(int, string, string)) error {
 
 	var wg sync.WaitGroup
 
@@ -13,18 +15,32 @@ func StartTasks(program_time int, bpftrace_time int, fileName string, toRun func
 
 	bpftrace_run := func() {
 		defer wg.Done()
-		toRun(bpftrace_time, fileName)
+		toRun(bpftrace_time, fileName, outputPath)
+	}
+	wg.Add(1)
+	go bpftrace_run()
+
+	arr, err := lsofLayer.LsofExec()
+	if err != nil {
+		wg.Wait()
+		return err
+	}
+
+	err = rpmLayer.RPMlayer(arr, outputPath)
+	if err != nil {
+		wg.Wait()
+		return err
 	}
 
 	for {
 		select {
 		case <-timer:
 			wg.Wait()
-			return
+			return nil
 		default:
 			wg.Add(1)
-			go bpftrace_run()
 			time.Sleep(time.Duration(bpftrace_time)*time.Second - 2*time.Second)
+			go bpftrace_run()
 		}
 	}
 
