@@ -19,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls)
+	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls, outputPath)
 	if err != nil {
 		log.Fatal(err)
 	}

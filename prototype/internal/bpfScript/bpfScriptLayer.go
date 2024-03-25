@@ -46,8 +46,17 @@ type SimpleCommand struct {
 	ArgCollected string
 }
 
-func GenerateBpfScript(commands []string) (*os.File, error) {
+func GenerateBpfScript(commands []string, dirPath string) (*os.File, error) {
 	path := "./script.bt"
+
+	if dirPath != "" {
+		err := os.MkdirAll(dirPath, 0777)
+		if err != nil {
+			return nil, err
+		}
+		path = dirPath + "/script.bt"
+	}
+	
 	err := createFile(path)
 	if err != nil {
 		return nil, err
