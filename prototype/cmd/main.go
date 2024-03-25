@@ -26,13 +26,8 @@ func main() {
 	if outputPath == "" {
 		os.Mkdir("out", os.FileMode(0777))
 	}
-  
-  err = rpmLayer.RPMlayer(arr)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-  os.Mkdir("tmp", os.FileMode(0777))
+	os.Mkdir("tmp", os.FileMode(0777))
 	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, toRun)
 	if err != nil {
 		log.Fatal(err)
