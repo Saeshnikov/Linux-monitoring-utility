@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"regexp"
+	"time"
 )
 
 func Parse(fileName string) ([]string, error) {
@@ -13,6 +14,7 @@ func Parse(fileName string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	time.Sleep(time.Second)
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
