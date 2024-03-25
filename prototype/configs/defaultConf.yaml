@@ -7,6 +7,6 @@ Syscalls:
   - open_tree
   - statx
   - fspick
-  - name_to_handle_at
+  - open_by_handle_at
   - readlink
   - readlinkat

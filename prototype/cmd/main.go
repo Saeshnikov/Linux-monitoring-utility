@@ -14,7 +14,6 @@ import (
 
 func main() {
 	bpftrace_time, program_time, syscalls, outputPath, err := config.ConfigRead()
-
 	if err != nil {
 		log.Fatal(err)
 	}
