@@ -10,7 +10,6 @@ import (
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
-	"time"
 )
 
 func main() {
@@ -46,7 +45,7 @@ func main() {
 	}
 }
 
-func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool) {
+func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, c chan *os.Process) {
 	cmdToRun := "/usr/bin/bpftrace"
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
@@ -58,16 +57,12 @@ func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *ma
 	}
 
 	procAttr.Files = []*os.File{os.Stdin, file, os.Stderr}
-
 	// Запуск bpftrace
-	fmt.Printf("Script started...\n")
 	if process, err := os.StartProcess(cmdToRun, args, procAttr); err != nil {
 		fmt.Printf("ERROR Unable to run %s: %s\n", cmdToRun, err.Error())
 	} else {
+		c <- process
 		fmt.Printf("%s running as pid %d\n", cmdToRun, process.Pid)
-		time.Sleep(time.Duration(bpftrace_time) * time.Second)
-		process.Signal(os.Interrupt)
-		fmt.Printf("Script stoped...\n")
 	}
 	toAnalyse(file, outputPath, outputMap)
 }
