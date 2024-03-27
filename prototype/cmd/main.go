@@ -10,6 +10,7 @@ import (
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
@@ -64,6 +65,7 @@ func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *ma
 		c <- process
 		fmt.Printf("%s running as pid %d\n", cmdToRun, process.Pid)
 	}
+	time.Sleep(time.Duration(bpftrace_time) * time.Second)
 	toAnalyse(file, outputPath, outputMap)
 }
 
