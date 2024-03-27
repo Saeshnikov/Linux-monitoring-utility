@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func StartTasks(program_time int, bpftrace_time int, fileName string, outputPath string, outputMap *map[string]bool, toRun func(int, string, string, *map[string]bool)) error {
+func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, toRun func(uint, string, string, *map[string]bool)) error {
 
 	var wg sync.WaitGroup
 
