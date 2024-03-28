@@ -1,0 +1,6 @@
+/etc/modprobe.d
+/usr/lib64/gcc
+/etc/ld.so.cache
+/lib64/libc.so.6
+/etc/fonts/conf.d/40-nonlatin.conf
+/etc/krb5.conf.d
