@@ -17,7 +17,7 @@ func LsofExec() ([]string, error) {
 	}
 	outScanner := bufio.NewScanner(stdout)
 	var arr []string
-	r, err := regexp.Compile(`^.{110}(/.*?)$`)
+	r, err := regexp.Compile(`(/.*?)$`)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,6 @@ func LsofExec() ([]string, error) {
 		res := r.FindAllStringSubmatch(outScanner.Text(), -1)
 		if res != nil {
 			arr = append(arr, res[0][1])
-
 		}
 	}
 	return arr, nil
