@@ -16,9 +16,9 @@ func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) er
 	if err != nil {
 		return err
 	}
-	err_ := findUnusedPackages(allPackages, usedPackages, dirPath, outputMap)
-	if err_ != nil {
-		return err_
+	err = findUnusedPackages(allPackages, usedPackages, dirPath, outputMap)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -36,6 +36,10 @@ func FindAllPackages() (map[string]bool, error) {
 	outScanner := bufio.NewScanner(stdout)
 	for outScanner.Scan() {
 		allPackages[outScanner.Text()] = true
+	}
+	err = cmd.Process.Kill()
+	if err != nil {
+		return nil, err
 	}
 	return allPackages, nil
 }
@@ -56,6 +60,10 @@ func findUsedPackages(usedFiles []string) (map[string]bool, error) {
 		outScanner.Split(bufio.ScanWords)
 		for outScanner.Scan() {
 			usedPackages[outScanner.Text()] = true
+		}
+		err = cmd.Process.Kill()
+		if err != nil {
+			return nil, err
 		}
 	}
 	return usedPackages, nil
