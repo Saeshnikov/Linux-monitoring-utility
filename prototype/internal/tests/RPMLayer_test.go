@@ -1,4 +1,4 @@
-package test
+package tests
 
 import (
 	"bufio"
@@ -44,14 +44,14 @@ func TestRPMLayer(t *testing.T) {
 }
 
 func readFile(filePath string) ([]string, error) {
-	var usedFiles []string
+	var arr []string
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	fileScanner := bufio.NewScanner(file)
 	for fileScanner.Scan() {
-		usedFiles = append(usedFiles, fileScanner.Text())
+		arr = append(arr, fileScanner.Text())
 	}
-	return usedFiles, nil
+	return arr, nil
 }
