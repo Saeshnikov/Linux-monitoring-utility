@@ -4,12 +4,13 @@ import (
 	"linux-monitoring-utility/internal/bpfParsing"
 	"os"
 	"reflect"
+	"testing"
 )
 
-func TestParsing() (bool, error) {
+func TestParse(t *testing.T) {
 	file, err := os.CreateTemp("./", "tmp")
 	if err != nil {
-		return false, err
+		t.Fatal(err.Error())
 	}
 	defer os.Remove(file.Name())
 	arr_test := []string{"a", "b", "c", "d", "e"}
@@ -19,10 +20,10 @@ func TestParsing() (bool, error) {
 
 	arr_res, err := bpfParsing.Parse(file.Name())
 	if err != nil {
-		return false, err
+		t.Fatal(err.Error())
 	}
 	if reflect.DeepEqual(arr_res, arr_test) {
-		return true, nil
+		return
 	}
-	return false, nil
+	t.Fatal("Test failed")
 }
