@@ -52,6 +52,7 @@ func GenerateBpfScript(commands []string, dirPath string) (*os.File, error) {
 	if dirPath != "" {
 		err := os.MkdirAll(dirPath, 0777)
 		if err != nil {
+			err := errors.New("The path '" + dirPath + "' could not be created.")
 			return nil, err
 		}
 		path = dirPath + "/script.bt"
