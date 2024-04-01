@@ -16,9 +16,9 @@ func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) er
 	if err != nil {
 		return err
 	}
-	err_ := FindUnusedPackages(allPackages, usedPackages, dirPath, outputMap)
-	if err_ != nil {
-		return err_
+	err = FindUnusedPackages(allPackages, usedPackages, dirPath, outputMap)
+	if err != nil {
+		return err
 	}
 	return nil
 }
