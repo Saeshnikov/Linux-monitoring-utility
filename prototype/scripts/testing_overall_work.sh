@@ -6,13 +6,13 @@ used_number_of_packages=$(( total_number_of_packages*80/100 ))
 #echo $used_number_of_packages
 array_packages=($(rpm -qa))
 
-#sudo zypper install emacs
+sudo zypper install emacs
 rpm -q emacs
 echo "install emacs emacs-27.2-150400.3.6.1.x86_64"
 
 echo "sleep 10m in"
 echo "Run the prototype..."
-sleep 5
+sleep 10m
 echo "sleep 10m out"
 
 for ((i=0; i < used_number_of_packages; i++))
