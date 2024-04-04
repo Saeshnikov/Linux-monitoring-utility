@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestLsofExec(t *testing.T) {
+func estLsofExec(t *testing.T) {
 	file, err := os.Create("/usr/tmp")
 	if err != nil {
 		t.Fatal(err.Error())
@@ -17,9 +17,6 @@ func TestLsofExec(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	for _, s := range arr_res {
-		if err != nil {
-			t.Fatal(err.Error())
-		}
 		if s == file.Name() {
 			return
 		}

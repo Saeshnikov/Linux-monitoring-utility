@@ -16,8 +16,16 @@ func LsofExec() ([]string, error) {
 		return nil, err
 	}
 	outScanner := bufio.NewScanner(stdout)
+	arr, err := LsofParsing(outScanner)
+	if err != nil {
+		return nil, err
+	}
+	return arr, nil
+}
+
+func LsofParsing(outScanner *bufio.Scanner) ([]string, error) {
 	var arr []string
-	r, err := regexp.Compile(`^.{110}(/.*?)$`)
+	r, err := regexp.Compile(`\s(/.*?)$`)
 	if err != nil {
 		return nil, err
 	}
