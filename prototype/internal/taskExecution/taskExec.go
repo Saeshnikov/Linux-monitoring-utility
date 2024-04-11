@@ -46,7 +46,10 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 		case err := <-errorChan:
 			return err
 		case <-timer:
-			curProc.Signal(os.Interrupt)
+			err := curProc.Signal(os.Interrupt)
+			if err != nil {
+				return err
+			}
 			fmt.Printf("Stopping previous process with PID: %d\n", curProc.Pid)
 			wg.Wait()
 			return nil
@@ -59,7 +62,10 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 				flag = true
 			}
 			if prevProc != nil {
-				prevProc.Signal(os.Interrupt)
+				err := prevProc.Signal(os.Interrupt)
+				if err != nil {
+					return err
+				}
 				fmt.Printf("Stopping previous process with PID: %d\n", prevProc.Pid)
 
 			}
@@ -70,4 +76,3 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 	}
 
 }
-
