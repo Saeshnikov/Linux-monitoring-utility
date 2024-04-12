@@ -12,13 +12,13 @@ func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) er
 	if err != nil {
 		return err
 	}
-	usedPackages, err := findUsedPackages(usedFiles)
+	usedPackages, err := FindUsedPackages(usedFiles)
 	if err != nil {
 		return err
 	}
-	err_ := findUnusedPackages(allPackages, usedPackages, dirPath, outputMap)
-	if err_ != nil {
-		return err_
+	err = FindUnusedPackages(allPackages, usedPackages, dirPath, outputMap)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -40,7 +40,7 @@ func FindAllPackages() (map[string]bool, error) {
 	return allPackages, nil
 }
 
-func findUsedPackages(usedFiles []string) (map[string]bool, error) {
+func FindUsedPackages(usedFiles []string) (map[string]bool, error) {
 	var usedPackages = make(map[string]bool)
 	for _, fileName := range usedFiles {
 		cmd := exec.Command("/usr/bin/rpm", "-qf", fileName)
@@ -61,11 +61,11 @@ func findUsedPackages(usedFiles []string) (map[string]bool, error) {
 	return usedPackages, nil
 }
 
-func findUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool, dirPath string, outputMap *map[string]bool) error {
-	filePath := ""
-	if dirPath != "" {
-		// filePath = filepath.Join(dirPath, "/out/")
-		filePath = dirPath
+func FindUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool, dirPath string, outputMap *map[string]bool) error {
+	// filePath := filepath.Join(dirPath, "/out/")
+	filePath := dirPath + "/out/"
+	if dirPath == "" {
+		filePath = "./out/"
 	}
 	err := os.MkdirAll(filePath, 0777)
 	if err != nil {
