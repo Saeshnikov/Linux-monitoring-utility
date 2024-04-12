@@ -33,7 +33,6 @@ func LsofParsing(outScanner *bufio.Scanner) ([]string, error) {
 		res := r.FindAllStringSubmatch(outScanner.Text(), -1)
 		if res != nil {
 			arr = append(arr, res[0][1])
-
 		}
 	}
 	return arr, nil
