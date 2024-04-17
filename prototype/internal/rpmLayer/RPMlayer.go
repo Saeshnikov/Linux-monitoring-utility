@@ -2,9 +2,7 @@ package rpmLayer
 
 import (
 	"bufio"
-	"os"
 	"os/exec"
-	"time"
 )
 
 func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) error {
@@ -63,19 +61,19 @@ func FindUsedPackages(usedFiles []string) (map[string]bool, error) {
 
 func FindUnusedPackages(allPackages map[string]bool, usedPackages map[string]bool, dirPath string, outputMap *map[string]bool) error {
 	// filePath := filepath.Join(dirPath, "/out/")
-	filePath := dirPath + "/out/"
-	if dirPath == "" {
-		filePath = "./out/"
-	}
-	err := os.MkdirAll(filePath, 0777)
-	if err != nil {
-		return err
-	}
+	// filePath := dirPath + "/out/"
+	// if dirPath == "" {
+	// 	filePath = "./out/"
+	// }
+	// err := os.MkdirAll(filePath, 0777)
+	// if err != nil {
+	// 	return err
+	// }
 
-	file, err := os.Create(filePath + time.Now().Format("2006-01-02 15:04:05"))
-	if err != nil {
-		return err
-	}
+	// file, err := os.Create(filePath + time.Now().Format("2006-01-02 15:04:05"))
+	// if err != nil {
+	// 	return err
+	// }
 
 	for packageName := range usedPackages {
 		if _, ok := allPackages[packageName]; ok {
@@ -84,9 +82,9 @@ func FindUnusedPackages(allPackages map[string]bool, usedPackages map[string]boo
 		}
 	}
 
-	file.WriteString("Not used packages:\n")
-	for packageName := range allPackages {
-		file.WriteString(packageName + "\n")
-	}
+	// file.WriteString("Not used packages:\n")
+	// for packageName := range allPackages {
+	// 	file.WriteString(packageName + "\n")
+	// }
 	return nil
 }
