@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	bpfParsing "linux-monitoring-utility/internal/bpfParsing"
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
+	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
 	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -29,13 +32,17 @@ func main() {
 	}
 
 	os.Mkdir("tmp", os.FileMode(0777))
-
+	defer os.RemoveAll("tmp")
 	outputMap, err := rpmLayer.FindAllPackages()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, &outputMap, toRun)
+	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, &outputMap, toRun, toRunLsof)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = toAnalyse("./tmp/", outputPath, &outputMap)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,13 +53,27 @@ func main() {
 	}
 }
 
+func toRunLsof() {
+	arr, err := lsofLayer.LsofExec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file, err := os.Create("./tmp/" + "lsofOutput")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, line := range arr {
+		file.WriteString(line + "\n")
+	}
+}
+
 func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, c chan *os.Process) {
 	cmdToRun := "/usr/bin/bpftrace"
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
 
-	// Создание временного файла для вывода bpftrace
-	file, err := os.CreateTemp("./tmp/", "tmp")
+	file, err := os.Create("./tmp/" + time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,18 +87,6 @@ func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *ma
 		fmt.Printf("%s running as pid %d\n", cmdToRun, process.Pid)
 	}
 	time.Sleep(time.Duration(bpftrace_time) * time.Second)
-	toAnalyse(file, outputPath, outputMap)
-}
-
-func toAnalyse(fileForAnalysis *os.File, outputPath string, outputMap *map[string]bool) {
-	defer os.Remove(fileForAnalysis.Name())
-
-	res, err := bpfParsing.Parse(fileForAnalysis.Name())
-	if err != nil {
-		log.Fatal(err)
-	}
-	//Через rpm -qf проверяем относится ли файл к rpm пакету
-	rpmLayer.RPMlayer(res, outputPath, outputMap)
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
@@ -97,3 +106,44 @@ func exportToJson(filePath string, outputMap map[string]bool) error {
 	outputFile.Write(jsonArray)
 	return nil
 }
+
+func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) error {
+	files, err := os.ReadDir(directory)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			if file.Name() == "lsofOutput" {
+				var res []string
+				filePath := filepath.Join(directory, file.Name())
+				f, err := os.Open(filePath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer f.Close()
+				scanner := bufio.NewScanner(f)
+				for scanner.Scan() {
+					line := scanner.Text()
+					res = append(res, line)
+				}
+				fmt.Print("File with name: ", file.Name(), " to analyse... ")
+				rpmLayer.RPMlayer(res, dirPath, outputMap)
+				fmt.Print(" DONE\n")
+
+			} else {
+				filePath := filepath.Join(directory, file.Name())
+				res, err := bpfParsing.Parse(filePath)
+				if err != nil {
+					return err
+				}
+				fmt.Print("File with name: ", file.Name(), " to analyse... ")
+				rpmLayer.RPMlayer(res, dirPath, outputMap)
+				fmt.Print(" DONE\n")
+			}
+		}
+
+	}
+	return nil
+}
+
