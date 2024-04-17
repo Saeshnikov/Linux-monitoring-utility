@@ -2,14 +2,12 @@ package taskExecution
 
 import (
 	"fmt"
-	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
-	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	"os"
 	"sync"
 	"time"
 )
 
-func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, toRun func(uint, string, string, *map[string]bool, chan *os.Process)) error {
+func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, toRun func(uint, string, string, *map[string]bool, chan *os.Process), toRunLsof func()) error {
 
 	var wg sync.WaitGroup
 
@@ -20,19 +18,7 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 	var prevProc *os.Process = nil
 	lsof_run := func() {
 		fmt.Printf("Lsof started...\n")
-		arr, err := lsofLayer.LsofExec()
-		if err != nil {
-			wg.Wait()
-			errorChan <- err
-			return
-		}
-
-		err = rpmLayer.RPMlayer(arr, outputPath, outputMap)
-		if err != nil {
-			wg.Wait()
-			errorChan <- err
-			return
-		}
+		toRunLsof()
 	}
 
 	bpftrace_run := func() {
@@ -70,4 +56,3 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 	}
 
 }
-
