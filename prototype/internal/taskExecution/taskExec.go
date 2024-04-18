@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
-func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, toRun func(uint, string, string, *map[string]bool, chan *os.Process)) error {
+func StartTasks(program_time uint, bpftrace_time uint, fileName string,
+	outputPath string, lsofBinPath string, bpfTraceBinPath string, outputMap *map[string]bool,
+	toRun func(uint, string, string, string, *map[string]bool, chan *os.Process)) error {
 
 	var wg sync.WaitGroup
 
@@ -20,7 +22,7 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 	var prevProc *os.Process = nil
 	lsof_run := func() {
 		fmt.Printf("Lsof started...\n")
-		arr, err := lsofLayer.LsofExec()
+		arr, err := lsofLayer.LsofExec(lsofBinPath)
 		if err != nil {
 			wg.Wait()
 			errorChan <- err
@@ -37,7 +39,7 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 
 	bpftrace_run := func() {
 		defer wg.Done()
-		toRun(bpftrace_time, fileName, outputPath, outputMap, c)
+		toRun(bpftrace_time, fileName, outputPath, bpfTraceBinPath, outputMap, c)
 	}
 	flag := false
 
@@ -70,4 +72,3 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 	}
 
 }
-
