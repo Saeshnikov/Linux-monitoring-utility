@@ -7,13 +7,12 @@ import (
 	"time"
 )
 
-func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, toRun func(uint, string, string, *map[string]bool, chan *os.Process), toRunLsof func()) error {
+func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun func(string) *os.Process, toRunLsof func()) error {
 
 	var wg sync.WaitGroup
 
 	timer := time.After(time.Duration(program_time) * time.Second)
 	c := make(chan *os.Process, 1)
-	errorChan := make(chan error, 1)
 	var curProc *os.Process = nil
 	var prevProc *os.Process = nil
 	lsof_run := func() {
@@ -23,14 +22,12 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, outputPa
 
 	bpftrace_run := func() {
 		defer wg.Done()
-		toRun(bpftrace_time, fileName, outputPath, outputMap, c)
+		c <- toRun(fileName)
 	}
 	flag := false
 
 	for {
 		select {
-		case err := <-errorChan:
-			return err
 		case <-timer:
 			curProc.Signal(os.Interrupt)
 			fmt.Printf("Stopping previous process with PID: %d\n", curProc.Pid)
