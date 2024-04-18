@@ -3,18 +3,19 @@ package taskExecution
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"sync"
 	"time"
 )
 
-func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun func(string) *os.Process, toRunLsof func()) error {
+func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun func(string, chan *exec.Cmd), toRunLsof func()) error {
 
 	var wg sync.WaitGroup
 
 	timer := time.After(time.Duration(program_time) * time.Second)
-	c := make(chan *os.Process, 1)
-	var curProc *os.Process = nil
-	var prevProc *os.Process = nil
+	c := make(chan *exec.Cmd, 1)
+	var curProc *exec.Cmd = nil
+	var prevProc *exec.Cmd = nil
 	lsof_run := func() {
 		fmt.Printf("Lsof started...\n")
 		toRunLsof()
@@ -22,15 +23,18 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun fu
 
 	bpftrace_run := func() {
 		defer wg.Done()
-		c <- toRun(fileName)
+		toRun(fileName, c)
 	}
 	flag := false
 
 	for {
 		select {
 		case <-timer:
-			curProc.Signal(os.Interrupt)
-			fmt.Printf("Stopping previous process with PID: %d\n", curProc.Pid)
+			err := curProc.Process.Signal(os.Interrupt)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Stopping previous process with PID: %d\n", curProc.Process.Pid)
 			wg.Wait()
 			return nil
 		default:
@@ -42,8 +46,11 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun fu
 				flag = true
 			}
 			if prevProc != nil {
-				prevProc.Signal(os.Interrupt)
-				fmt.Printf("Stopping previous process with PID: %d\n", prevProc.Pid)
+				err := prevProc.Process.Signal(os.Interrupt)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Stopping previous process with PID: %d\n", prevProc.Process.Pid)
 
 			}
 			prevProc = curProc
@@ -53,3 +60,4 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun fu
 	}
 
 }
+
