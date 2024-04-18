@@ -25,10 +25,16 @@ func main() {
 	}
 
 	if outputPath == "" {
-		os.Mkdir("out", os.FileMode(0777))
+		err = os.Mkdir("out", os.FileMode(0777))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	os.Mkdir("tmp", os.FileMode(0777))
+	err = os.Mkdir("tmp", os.FileMode(0777))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	outputMap, err := rpmLayer.FindAllPackages()
 	if err != nil {
@@ -77,13 +83,16 @@ func toAnalyse(fileForAnalysis *os.File, outputPath string, outputMap *map[strin
 		log.Fatal(err)
 	}
 	//Через rpm -qf проверяем относится ли файл к rpm пакету
-	rpmLayer.RPMlayer(res, outputPath, outputMap)
+	err = rpmLayer.RPMlayer(res, outputPath, outputMap)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
 	entriesArr := make([]string, 0)
 
-	for entry, _ := range outputMap {
+	for entry := range outputMap {
 		entriesArr = append(entriesArr, entry)
 	}
 	jsonArray, err := json.Marshal(entriesArr)
@@ -94,6 +103,9 @@ func exportToJson(filePath string, outputMap map[string]bool) error {
 	if err != nil {
 		return err
 	}
-	outputFile.Write(jsonArray)
+	_, err = outputFile.Write(jsonArray)
+	if err != nil {
+		return err
+	}
 	return nil
 }

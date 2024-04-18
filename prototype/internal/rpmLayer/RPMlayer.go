@@ -84,9 +84,15 @@ func FindUnusedPackages(allPackages map[string]bool, usedPackages map[string]boo
 		}
 	}
 
-	file.WriteString("Not used packages:\n")
+	_, err = file.WriteString("Not used packages:\n")
+	if err != nil {
+		return err
+	}
 	for packageName := range allPackages {
-		file.WriteString(packageName + "\n")
+		_, err = file.WriteString(packageName + "\n")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
