@@ -12,6 +12,7 @@ import (
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 )
@@ -69,31 +70,27 @@ func toRunLsof() {
 	}
 }
 
-func toRun(fileName string) *os.Process {
-	cmdToRun := "/usr/bin/bpftrace"
-	args := []string{"", fileName}
-	procAttr := new(os.ProcAttr)
+func toRun(fileName string, c chan *exec.Cmd) {
 	file, err := os.Create("./tmp/" + time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	procAttr.Files = []*os.File{os.Stdin, file, os.Stderr}
-	// Запуск bpftrace
-	if process, err := os.StartProcess(cmdToRun, args, procAttr); err != nil {
-		fmt.Printf("ERROR Unable to run %s: %s\n", cmdToRun, err.Error())
+	cmd := exec.Command("/usr/bin/bpftrace", fileName)
+	cmd.Stdout = file
+	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
-		return nil
-	} else {
-		fmt.Printf("%s running as pid %d\n", cmdToRun, process.Pid)
-		return process
 	}
+	time.Sleep(5 * time.Second) //!?!?!?!?
+	c <- cmd
+	fmt.Printf("Procces is running as pid %d\n", cmd.Process.Pid)
+	cmd.Wait()
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
 	entriesArr := make([]string, 0)
 
-	for entry, _ := range outputMap {
+	for entry := range outputMap {
 		entriesArr = append(entriesArr, entry)
 	}
 	jsonArray, err := json.Marshal(entriesArr)
