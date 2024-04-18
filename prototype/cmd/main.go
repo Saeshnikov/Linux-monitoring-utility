@@ -38,10 +38,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, &outputMap, toRun, toRunLsof)
+	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun, toRunLsof)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = toAnalyse("./tmp/", outputPath, &outputMap)
 	if err != nil {
 		log.Fatal(err)
@@ -68,11 +69,10 @@ func toRunLsof() {
 	}
 }
 
-func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, c chan *os.Process) {
+func toRun(fileName string) *os.Process {
 	cmdToRun := "/usr/bin/bpftrace"
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
-
 	file, err := os.Create("./tmp/" + time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		log.Fatal(err)
@@ -82,11 +82,12 @@ func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *ma
 	// Запуск bpftrace
 	if process, err := os.StartProcess(cmdToRun, args, procAttr); err != nil {
 		fmt.Printf("ERROR Unable to run %s: %s\n", cmdToRun, err.Error())
+		log.Fatal(err)
+		return nil
 	} else {
-		c <- process
 		fmt.Printf("%s running as pid %d\n", cmdToRun, process.Pid)
+		return process
 	}
-	time.Sleep(time.Duration(bpftrace_time) * time.Second)
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
@@ -135,7 +136,7 @@ func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) err
 				filePath := filepath.Join(directory, file.Name())
 				res, err := bpfParsing.Parse(filePath)
 				if err != nil {
-					return err
+					log.Fatal(err)
 				}
 				fmt.Print("File with name: ", file.Name(), " to analyse... ")
 				rpmLayer.RPMlayer(res, dirPath, outputMap)
@@ -146,4 +147,3 @@ func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) err
 	}
 	return nil
 }
-
