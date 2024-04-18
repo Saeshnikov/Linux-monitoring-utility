@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"os"
 
@@ -19,6 +20,11 @@ func ConfigRead() (uint, uint, []string, string, error) {
 	programTime := flag.Uint("T", 86400, "Program working time")           //Program working time
 	configFileName := flag.String("c", "/etc/lmuConf.yaml", "Path to .yaml config file")
 	outputPath := flag.String("o", ".", "Path to the result")
+
+	if *scriptTime >= *programTime {
+		err := errors.New("Script time cannot be more than program time.")
+		return 0, 0, nil, "", err
+	}
 
 	flag.Parse()
 
