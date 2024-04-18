@@ -4,9 +4,17 @@ build_version=$(shell git describe --tags 2> /dev/null || echo "dev-$(shell git 
 GOBUILDPATH ?= $(CURDIR)
 GOTESTFLAGS := 
 
+dist_dir ?= $(CURDIR)/dist
+
 .PHONY: all
+all: deps
 all: build
 all: install
+
+.PHONY: deps
+deps:
+	go mod download
+	go mod tidy
 
 .PHONY: build
 build:
@@ -14,7 +22,7 @@ build:
 
 .PHONY: install
 install:
-	cp $(CURDIR)/configs/defaultConf.yaml /etc/lmuConf.yaml
+	cp $(CURDIR)/configs/defaultConf.yaml $(dist_dir)/etc/lmuConf.yaml
 
 .PHONY: test
 test:
@@ -23,7 +31,7 @@ test:
 .PHONY: clean
 clean:
 	rm -r build || true
-	rm /etc/lmuConf.yaml
+	rm $(dist_path)/etc/lmuConf.yaml || true
 
 .PHONY: version
 version:
