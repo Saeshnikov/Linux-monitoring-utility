@@ -87,14 +87,16 @@ func toRun(fileName string, c chan *exec.Cmd) {
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Printf("Procces is running as pid %d\n", cmd.Process.Pid)
 	line, err := reader.ReadString('\n')
+
 	c <- cmd
+
 	for err == nil {
 		file.WriteString(line)
 		line, err = reader.ReadString('\n')
 	}
-	fmt.Printf("Procces is running as pid %d\n", cmd.Process.Pid)
+
 	cmd.Wait()
 
 }
