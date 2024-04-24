@@ -75,16 +75,28 @@ func toRun(fileName string, c chan *exec.Cmd) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
 
 	cmd := exec.Command("/usr/bin/bpftrace", fileName)
-	cmd.Stdout = file
+	pipe, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reader := bufio.NewReader(pipe)
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
-	time.Sleep(5 * time.Second) //!?!?!?!?
 	c <- cmd
+
+	line, err := reader.ReadString('\n')
+	for err == nil {
+		file.WriteString(line)
+		line, err = reader.ReadString('\n')
+	}
 	fmt.Printf("Procces is running as pid %d\n", cmd.Process.Pid)
 	cmd.Wait()
+
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
