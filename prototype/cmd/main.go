@@ -87,9 +87,9 @@ func toRun(fileName string, c chan *exec.Cmd) {
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
-	c <- cmd
 
 	line, err := reader.ReadString('\n')
+	c <- cmd
 	for err == nil {
 		file.WriteString(line)
 		line, err = reader.ReadString('\n')
