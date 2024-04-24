@@ -4,17 +4,32 @@ build_version=$(shell git describe --tags 2> /dev/null || echo "dev-$(shell git 
 GOBUILDPATH ?= $(CURDIR)
 GOTESTFLAGS := 
 
+DESTDIR ?= $(CURDIR)/dist
+
 .PHONY: all
+all: deps
 all: build
 all: install
+
+.PHONY: deps
+deps:
+	go mod download
+	go mod tidy
 
 .PHONY: build
 build:
 	go build -o $(GOBUILDPATH)/build/lmu $(CURDIR)/cmd/main.go
 
 .PHONY: install
-install:
-	cp $(CURDIR)/configs/defaultConf.yaml /etc/lmuConf.yaml
+install: | $(DESTDIR)
+	cp $(CURDIR)/configs/defaultConf.yaml $(DESTDIR)/etc/lmuConf.yaml
+	cp $(GOBUILDPATH)/build/lmu $(DESTDIR)/usr/bin/lmu
+
+$(DESTDIR):
+	mkdir $(DESTDIR)
+	mkdir $(DESTDIR)/etc
+	mkdir $(DESTDIR)/usr
+	mkdir $(DESTDIR)/usr/bin
 
 .PHONY: test
 test:
@@ -23,7 +38,7 @@ test:
 .PHONY: clean
 clean:
 	rm -r build || true
-	rm /etc/lmuConf.yaml
+	rm -r dist|| true
 
 .PHONY: version
 version:
