@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type bpftraceConfig struct {
+type BpftraceConfig struct {
 	Syscalls []string `yaml:"Syscalls"`
 }
 
@@ -70,16 +70,23 @@ func configValidate(configStruct *ConfigFile) error {
 }
 
 func ConfigRead(configStruct *ConfigFile) ([]string, error) {
-	configFileName := flag.String("cfg", "none", "Path to the .yaml config")
-	flag.Parse()
+	cfgFileFlag := false
+	//Checking if cfg flag provided
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "cfg" {
+			cfgFileFlag = true
+		}
+	})
 
-	if *configFileName == "none" {
-		err := cliRead(configStruct)
+	if cfgFileFlag {
+		configFileName := flag.String("cfg", "../configs/defaultCfg.yaml", "Path to the .yaml config")
+		flag.Parse()
+		err := configFileRead(*configFileName, configStruct)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		err := configFileRead(*configFileName, configStruct)
+		err := cliRead(configStruct)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +99,7 @@ func ConfigRead(configStruct *ConfigFile) ([]string, error) {
 	}
 
 	//Reading syscalls yaml file
-	var config bpftraceConfig
+	var config BpftraceConfig
 
 	bpftraceYamlFile, err := os.ReadFile(configStruct.ConfigFileName)
 	if err != nil {

@@ -4,24 +4,27 @@ import (
 	"os"
 	"testing"
 
+	bpfScript "linux-monitoring-utility/internal/bpfScript"
+	config "linux-monitoring-utility/internal/config"
+
 	"gopkg.in/yaml.v3"
 )
 
 func TestConfig(t *testing.T) {
-	configFileName := "../tests/data/invalidCfg.yaml"
-	yamlFile, err := os.ReadFile(*configFileName)
+	bpfConfigFileName := "../tests/data/invalidBpfCfg.yaml"
+	yamlFile, err := os.ReadFile(bpfConfigFileName)
 	if err != nil {
-		return 0, 0, nil, "", err
+		t.Fatal(err.Error())
 	}
 
-	err = yaml.Unmarshal(yamlFile, &config)
+	var bpfCfg config.BpftraceConfig
+	err = yaml.Unmarshal(yamlFile, &bpfCfg)
 	if err != nil {
-		t.fatal(err.Error())
+		t.Fatal(err.Error())
 	}
 
-	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls, "")
+	_, err = bpfScript.GenerateBpfScript(bpfCfg.Syscalls, "")
 	if err == nil {
 		t.Fatal("BpfScriptLayer accepted invalid config file.")
 	}
-	return
 }
