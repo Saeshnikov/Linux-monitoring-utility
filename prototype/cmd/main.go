@@ -1,20 +1,28 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	bpfParsing "linux-monitoring-utility/internal/bpfParsing"
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
+	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
 	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"time"
 )
 
 func main() {
-	bpftrace_time, program_time, syscalls, outputPath, lsofBinPath, bpfTraceBinPath, err := config.ConfigRead()
+	os.Setenv("BPFTRACE_STRLEN", "128")
+
+	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "20000")
+	bpftrace_time, program_time, syscalls, outputPath, err := config.ConfigRead()
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,17 +39,20 @@ func main() {
 		}
 	}
 
-	err = os.Mkdir("tmp", os.FileMode(0777))
-	if err != nil {
-		log.Fatal(err)
-	}
 
+	os.Mkdir("tmp", os.FileMode(0777))
+	defer os.RemoveAll("tmp")
 	outputMap, err := rpmLayer.FindAllPackages()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, lsofBinPath, bpfTraceBinPath, &outputMap, toRun)
+	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun, toRunLsof)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = toAnalyse("./tmp/", outputPath, &outputMap)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,40 +63,49 @@ func main() {
 	}
 }
 
-func toRun(bpftrace_time uint, fileName string, outputPath string, bpfTraceBinPath string, outputMap *map[string]bool, c chan *os.Process) {
-	args := []string{"", fileName}
-	procAttr := new(os.ProcAttr)
-
-	// Создание временного файла для вывода bpftrace
-	file, err := os.CreateTemp("./tmp/", "tmp")
+func toRunLsof() {
+	arr, err := lsofLayer.LsofExec()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file, err := os.Create("./tmp/" + "lsofOutput")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	procAttr.Files = []*os.File{os.Stdin, file, os.Stderr}
-	// Запуск bpftrace
-	if process, err := os.StartProcess(bpfTraceBinPath, args, procAttr); err != nil {
-		fmt.Printf("ERROR Unable to run %s: %s\n", bpfTraceBinPath, err.Error())
-	} else {
-		c <- process
-		fmt.Printf("%s running as pid %d\n", bpfTraceBinPath, process.Pid)
+	for _, line := range arr {
+		file.WriteString(line + "\n")
 	}
-	time.Sleep(time.Duration(bpftrace_time) * time.Second)
-	toAnalyse(file, outputPath, outputMap)
 }
 
-func toAnalyse(fileForAnalysis *os.File, outputPath string, outputMap *map[string]bool) {
-	defer os.Remove(fileForAnalysis.Name())
+func toRun(fileName string, c chan *exec.Cmd) {
+	file, err := os.Create("./tmp/" + time.Now().Format("2006-01-02 15:04:05"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
 
-	res, err := bpfParsing.Parse(fileForAnalysis.Name())
+	cmd := exec.Command("/usr/bin/bpftrace", fileName)
+	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
 	}
-	//Через rpm -qf проверяем относится ли файл к rpm пакету
-	err = rpmLayer.RPMlayer(res, outputPath, outputMap)
-	if err != nil {
+
+	reader := bufio.NewReader(pipe)
+	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("Procces is running as pid %d\n", cmd.Process.Pid)
+	line, err := reader.ReadString('\n')
+
+	c <- cmd
+
+	for err == nil {
+		file.WriteString(line)
+		line, err = reader.ReadString('\n')
+	}
+
+	cmd.Wait()
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
@@ -105,6 +125,46 @@ func exportToJson(filePath string, outputMap map[string]bool) error {
 	_, err = outputFile.Write(jsonArray)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) error {
+	files, err := os.ReadDir(directory)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			if file.Name() == "lsofOutput" {
+				var res []string
+				filePath := filepath.Join(directory, file.Name())
+				f, err := os.Open(filePath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer f.Close()
+				scanner := bufio.NewScanner(f)
+				for scanner.Scan() {
+					line := scanner.Text()
+					res = append(res, line)
+				}
+				fmt.Print("File with name: ", file.Name(), " to analyse... ")
+				rpmLayer.RPMlayer(res, dirPath, outputMap)
+				fmt.Print(" DONE\n")
+
+			} else {
+				filePath := filepath.Join(directory, file.Name())
+				res, err := bpfParsing.Parse(filePath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				fmt.Print("File with name: ", file.Name(), " to analyse... ")
+				rpmLayer.RPMlayer(res, dirPath, outputMap)
+				fmt.Print(" DONE\n")
+			}
+		}
+
 	}
 	return nil
 }

@@ -2,57 +2,39 @@ package taskExecution
 
 import (
 	"fmt"
-	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
-	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	"os"
+	"os/exec"
 	"sync"
 	"time"
 )
 
-func StartTasks(program_time uint, bpftrace_time uint, fileName string,
-	outputPath string, lsofBinPath string, bpfTraceBinPath string, outputMap *map[string]bool,
-	toRun func(uint, string, string, string, *map[string]bool, chan *os.Process)) error {
-
+func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun func(string, chan *exec.Cmd), toRunLsof func()) error {
 	var wg sync.WaitGroup
 
 	timer := time.After(time.Duration(program_time) * time.Second)
-	c := make(chan *os.Process, 1)
-	errorChan := make(chan error, 1)
-	var curProc *os.Process = nil
-	var prevProc *os.Process = nil
+	c := make(chan *exec.Cmd, 1)
+	var curProc *exec.Cmd = nil
+	var prevProc *exec.Cmd = nil
 	lsof_run := func() {
+		defer wg.Done()
 		fmt.Printf("Lsof started...\n")
-		arr, err := lsofLayer.LsofExec(lsofBinPath)
-		if err != nil {
-			wg.Wait()
-			errorChan <- err
-			return
-		}
-
-		err = rpmLayer.RPMlayer(arr, outputPath, outputMap)
-		if err != nil {
-			wg.Wait()
-			errorChan <- err
-			return
-		}
+		toRunLsof()
 	}
 
 	bpftrace_run := func() {
 		defer wg.Done()
-		toRun(bpftrace_time, fileName, outputPath, bpfTraceBinPath, outputMap, c)
+		toRun(fileName, c)
 	}
 	flag := false
 
 	for {
 		select {
-		case err := <-errorChan:
-			return err
 		case <-timer:
-			err := curProc.Signal(os.Interrupt)
+			err := curProc.Process.Signal(os.Interrupt)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Stopping previous process with PID: %d\n", curProc.Pid)
+			fmt.Printf("Stopping previous process with PID: %d\n", curProc.Process.Pid)
 			wg.Wait()
 			return nil
 		default:
@@ -60,21 +42,20 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string,
 			go bpftrace_run()
 			curProc = <-c
 			if !flag {
+				wg.Add(1)
 				go lsof_run()
 				flag = true
 			}
 			if prevProc != nil {
-				err := prevProc.Signal(os.Interrupt)
+				err := prevProc.Process.Signal(os.Interrupt)
 				if err != nil {
 					return err
 				}
-				fmt.Printf("Stopping previous process with PID: %d\n", prevProc.Pid)
+				fmt.Printf("Stopping previous process with PID: %d\n", prevProc.Process.Pid)
 
 			}
 			prevProc = curProc
 			time.Sleep(time.Duration(bpftrace_time) * time.Second)
-
 		}
 	}
-
 }
