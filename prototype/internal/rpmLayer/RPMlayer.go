@@ -3,6 +3,7 @@ package rpmLayer
 import (
 	"bufio"
 	"os/exec"
+	"strings"
 )
 
 func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) error {
@@ -10,7 +11,9 @@ func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) er
 	if err != nil {
 		return err
 	}
+
 	FindUnusedPackages(usedPackages, dirPath, outputMap)
+
 	return nil
 }
 
@@ -32,33 +35,36 @@ func FindAllPackages() (map[string]bool, error) {
 }
 
 func FindUsedPackages(usedFiles []string) (map[string]bool, error) {
+
 	var usedPackages = make(map[string]bool)
 	for _, fileName := range usedFiles {
 		cmd := exec.Command("/usr/bin/rpm", "-qf", fileName)
 
-		stdout, err := cmd.StdoutPipe()
+		pipe, err := cmd.StdoutPipe()
 		if err != nil {
 			return nil, err
 		}
+
+		reader := bufio.NewReader(pipe)
 		if err := cmd.Start(); err != nil {
 			return nil, err
 		}
+		line, err := reader.ReadString('\n')
 
-		cmd.Wait()
-		
-		outScanner := bufio.NewScanner(stdout)
-		outScanner.Split(bufio.ScanWords)
-		for outScanner.Scan() {
-			usedPackages[outScanner.Text()] = true
+		for err == nil {
+			if len(strings.Fields(line)) == 1 {
+				usedPackages[strings.ReplaceAll(strings.ReplaceAll(line, " ", ""), "\n", "")] = true
+			}
+
+			line, err = reader.ReadString('\n')
 		}
+		cmd.Wait()
 	}
 	return usedPackages, nil
 }
 
 func FindUnusedPackages(usedPackages map[string]bool, dirPath string, outputMap *map[string]bool) {
 	for packageName := range usedPackages {
-		if _, ok := (*outputMap)[packageName]; ok {
-			delete(*outputMap, packageName)
-		}
+		delete(*outputMap, packageName)
 	}
 }
