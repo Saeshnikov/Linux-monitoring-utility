@@ -28,7 +28,7 @@ func TestFindUnusedPackages(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rpmLayer.FindUnusedPackages(tt.args.allPackages, tt.args.usedPackages, tt.args.dirPath, tt.args.outputMap)
+			rpmLayer.FindUnusedPackages(tt.args.usedPackages, tt.args.dirPath, tt.args.outputMap)
 			eq := Equal(tt.expectedArr, outputMap)
 			if tt.wantErr {
 				if eq {
