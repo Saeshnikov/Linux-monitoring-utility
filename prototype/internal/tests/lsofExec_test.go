@@ -12,7 +12,7 @@ func estLsofExec(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	defer os.Remove(file.Name())
-	arr_res, err := lsofLayer.LsofExec()
+	arr_res, err := lsofLayer.LsofExec("usr/bin/lsof")
 	if err != nil {
 		t.Fatal(err.Error())
 	}

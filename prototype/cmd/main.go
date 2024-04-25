@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	bpftrace_time, program_time, syscalls, outputPath, err := config.ConfigRead()
+	bpftrace_time, program_time, syscalls, outputPath, lsofBinPath, bpfTraceBinPath, err := config.ConfigRead()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, &outputMap, toRun)
+	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), outputPath, lsofBinPath, bpfTraceBinPath, &outputMap, toRun)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,8 +52,7 @@ func main() {
 	}
 }
 
-func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *map[string]bool, c chan *os.Process) {
-	cmdToRun := "/usr/bin/bpftrace"
+func toRun(bpftrace_time uint, fileName string, outputPath string, bpfTraceBinPath string, outputMap *map[string]bool, c chan *os.Process) {
 	args := []string{"", fileName}
 	procAttr := new(os.ProcAttr)
 
@@ -65,11 +64,11 @@ func toRun(bpftrace_time uint, fileName string, outputPath string, outputMap *ma
 
 	procAttr.Files = []*os.File{os.Stdin, file, os.Stderr}
 	// Запуск bpftrace
-	if process, err := os.StartProcess(cmdToRun, args, procAttr); err != nil {
-		fmt.Printf("ERROR Unable to run %s: %s\n", cmdToRun, err.Error())
+	if process, err := os.StartProcess(bpfTraceBinPath, args, procAttr); err != nil {
+		fmt.Printf("ERROR Unable to run %s: %s\n", bpfTraceBinPath, err.Error())
 	} else {
 		c <- process
-		fmt.Printf("%s running as pid %d\n", cmdToRun, process.Pid)
+		fmt.Printf("%s running as pid %d\n", bpfTraceBinPath, process.Pid)
 	}
 	time.Sleep(time.Duration(bpftrace_time) * time.Second)
 	toAnalyse(file, outputPath, outputMap)
