@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func main() {
 	os.Setenv("BPFTRACE_STRLEN", "128")
 
 	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "20000")
-	bpftrace_time, program_time, syscalls, outputPath, err := config.ConfigRead()
+	bpftrace_time, program_time, syscalls, outputPath, _, _, err := config.ConfigRead()
 
 	if err != nil {
 		log.Fatal(err)
@@ -79,7 +80,7 @@ func toRunLsof() {
 
 func toRun(fileName string, c chan *exec.Cmd) {
 
-	file, err := os.Create("./tmp/" + string(time.Now().Unix()))
+	file, err := os.Create("./tmp/" + strconv.FormatInt(time.Now().Unix(), 10))
 	if err != nil {
 		log.Fatal(err)
 	}
