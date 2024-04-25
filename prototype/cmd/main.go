@@ -18,6 +18,9 @@ import (
 )
 
 func main() {
+	os.Setenv("BPFTRACE_STRLEN", "128")
+
+	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "20000")
 	bpftrace_time, program_time, syscalls, outputPath, err := config.ConfigRead()
 	if err != nil {
 		log.Fatal(err)
