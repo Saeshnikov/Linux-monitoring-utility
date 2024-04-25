@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 func LsofExec() ([]string, error) {
@@ -24,7 +25,9 @@ func LsofExec() ([]string, error) {
 }
 
 func LsofParsing(outScanner *bufio.Scanner) ([]string, error) {
-	var arr []string
+	// var arr map[string]bool
+	arr := make(map[string]bool)
+	var out []string
 	r, err := regexp.Compile(`\s(/.*?)$`)
 	if err != nil {
 		return nil, err
@@ -32,8 +35,14 @@ func LsofParsing(outScanner *bufio.Scanner) ([]string, error) {
 	for outScanner.Scan() {
 		res := r.FindAllStringSubmatch(outScanner.Text(), -1)
 		if res != nil {
-			arr = append(arr, res[0][1])
+			if len(res[0][1]) > 1 && len(strings.Split(res[0][1], "/proc/")) == 1 && len(strings.Split(res[0][1], "/dev/")) == 1 && len(strings.Fields(res[0][1])) == 1 {
+				arr[res[0][1]] = true
+			}
+
 		}
 	}
-	return arr, nil
+	for k := range arr {
+		out = append(out, k)
+	}
+	return out, nil
 }

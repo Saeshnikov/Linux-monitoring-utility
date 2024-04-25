@@ -21,7 +21,7 @@ import (
 func main() {
 	os.Setenv("BPFTRACE_STRLEN", "128")
 
-	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "20000")
+	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "100000")
 	bpftrace_time, program_time, syscalls, outputPath, _, _, err := config.ConfigRead()
 
 	if err != nil {
@@ -110,6 +110,7 @@ func toRun(fileName string, c chan *exec.Cmd) {
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
+
 	entriesArr := make([]string, 0)
 
 	for entry := range outputMap {
