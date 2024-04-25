@@ -33,14 +33,13 @@ func main() {
 	}
 
 	if outputPath == "" {
-		err = os.Mkdir("out", os.FileMode(0777))
+		err = os.MkdirAll("out", os.FileMode(0777))
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-
-	os.Mkdir("tmp", os.FileMode(0777))
+	os.MkdirAll("tmp", os.FileMode(0777))
 	defer os.RemoveAll("tmp")
 	outputMap, err := rpmLayer.FindAllPackages()
 	if err != nil {
@@ -79,7 +78,8 @@ func toRunLsof() {
 }
 
 func toRun(fileName string, c chan *exec.Cmd) {
-	file, err := os.Create("./tmp/" + time.Now().Format("2006-01-02 15:04:05"))
+
+	file, err := os.Create("./tmp/" + string(time.Now().Unix()))
 	if err != nil {
 		log.Fatal(err)
 	}
