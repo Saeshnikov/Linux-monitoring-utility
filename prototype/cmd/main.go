@@ -18,53 +18,62 @@ import (
 	"time"
 )
 
+var programConfig config.ConfigFile
+
 func main() {
 	os.Setenv("BPFTRACE_STRLEN", "128")
 
 	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "100000")
+  
+  
 	bpftrace_time, program_time, syscalls, outputPath, _, _, err := config.ConfigRead()
 
+
+	syscalls, err := config.ConfigRead(&programConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls, outputPath)
+	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls, programConfig.OutputPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if outputPath == "" {
+	if programConfig.OutputPath == "" {
 		err = os.MkdirAll("out", os.FileMode(0777))
+
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
+
 	os.MkdirAll("tmp", os.FileMode(0777))
+
 	defer os.RemoveAll("tmp")
 	outputMap, err := rpmLayer.FindAllPackages()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = taskExecution.StartTasks(program_time, bpftrace_time, bpfScriptFile.Name(), toRun, toRunLsof)
+	err = taskExecution.StartTasks(programConfig.ProgramTime, programConfig.ScriptTime, bpfScriptFile.Name(), toRun, toRunLsof)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = toAnalyse("./tmp/", outputPath, &outputMap)
+	err = toAnalyse("./tmp/", programConfig.OutputPath, &outputMap)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = exportToJson(outputPath, outputMap)
+	err = exportToJson(programConfig.OutputPath, outputMap)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func toRunLsof() {
-	arr, err := lsofLayer.LsofExec()
+	arr, err := lsofLayer.LsofExec(programConfig.LsofBinPath)
 	if err != nil {
 		log.Fatal(err)
 	}
