@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"regexp"
+	"strings"
 )
 
 func Parse(fileName string) ([]string, error) {
@@ -23,7 +24,9 @@ func Parse(fileName string) ([]string, error) {
 
 		res := r.FindAllStringSubmatch(fileScanner.Text(), -1)
 		if res != nil {
-			arr = append(arr, res[0][1])
+			if len(res[0][1]) > 1 && len(strings.Split(res[0][1], "/proc/")) == 1 && len(strings.Split(res[0][1], " /dev/")) == 1 && len(strings.Fields(res[0][1])) == 1 {
+				arr = append(arr, res[0][1])
+			}
 		}
 	}
 

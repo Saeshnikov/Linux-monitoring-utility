@@ -6,13 +6,13 @@ import (
 	"testing"
 )
 
-func estLsofExec(t *testing.T) {
+func TestLsofExec(t *testing.T) {
 	file, err := os.Create("/usr/tmp")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	defer os.Remove(file.Name())
-	arr_res, err := lsofLayer.LsofExec("usr/bin/lsof")
+	arr_res, err := lsofLayer.LsofExec()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
