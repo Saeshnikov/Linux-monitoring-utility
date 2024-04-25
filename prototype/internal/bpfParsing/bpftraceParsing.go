@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"os"
 	"regexp"
-	"time"
 )
 
 func Parse(fileName string) ([]string, error) {
