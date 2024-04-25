@@ -4,9 +4,9 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	"os"
 	"testing"
-	bpfScript "linux-monitoring-utility/internal/bpfScript"
 )
 
 func TestBpfScriptLayer(t *testing.T) {
@@ -58,7 +58,10 @@ func Equal(fileOld *os.File, fileCheck string) bool {
 
 	checksums := []string{}
 	for _, f := range files {
-		f.Seek(0, 0)
+		_, err := f.Seek(0, 0)
+		if err != nil {
+			return false
+		}
 		sum, err := getMD5SumString(f)
 		if err != nil {
 			return false
@@ -66,10 +69,7 @@ func Equal(fileOld *os.File, fileCheck string) bool {
 		checksums = append(checksums, sum)
 	}
 	//fmt.Println("### Сравнение по контрольной сумме ###")
-	if !compareCheckSum(checksums[0], checksums[1]) {
-		return false
-	}
-	return true
+	return compareCheckSum(checksums[0], checksums[1])
 }
 
 func getMD5SumString(f *os.File) (string, error) {
@@ -82,9 +82,6 @@ func getMD5SumString(f *os.File) (string, error) {
 }
 
 func compareCheckSum(sum1, sum2 string) bool {
-	if sum1 != sum2 {
-		return false
-	}
+	return sum1 == sum2
 	//fmt.Printf("MD5: %s и MD5: %s %s совпадают\n", sum1, sum2)
-	return true
 }

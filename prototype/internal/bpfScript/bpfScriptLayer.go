@@ -57,7 +57,7 @@ func GenerateBpfScript(commands []string, dirPath string) (*os.File, error) {
 		}
 		path = dirPath + "/script.bt"
 	}
-	
+
 	err := createFile(path)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,10 @@ func GenerateBpfScript(commands []string, dirPath string) (*os.File, error) {
 	}
 	defer file.Close()
 
-	file.WriteString("BEGIN" + immutablePieces["BEGIN"])
+	_, err = file.WriteString("BEGIN" + immutablePieces["BEGIN"])
+	if err != nil {
+		return nil, err
+	}
 
 	if len(commands) == 0 {
 		err = makeDefaultScript(file)
@@ -246,7 +249,10 @@ func makeSpecificScript(file *os.File, commands []string) error {
 					}
 				}
 			default:
-				tmplSimplCom.Execute(file, mainPieces)
+				err := tmplSimplCom.Execute(file, mainPieces)
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			err := errors.New("The system call '" + com + "' is not valid.")

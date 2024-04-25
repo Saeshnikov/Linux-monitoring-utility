@@ -6,8 +6,8 @@ import (
 	"regexp"
 )
 
-func LsofExec() ([]string, error) {
-	cmd := exec.Command("/usr/bin/lsof")
+func LsofExec(lsofBinPath string) ([]string, error) {
+	cmd := exec.Command(lsofBinPath)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err

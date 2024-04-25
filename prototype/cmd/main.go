@@ -22,6 +22,7 @@ func main() {
 
 	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "20000")
 	bpftrace_time, program_time, syscalls, outputPath, err := config.ConfigRead()
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,8 +33,12 @@ func main() {
 	}
 
 	if outputPath == "" {
-		os.Mkdir("out", os.FileMode(0777))
+		err = os.Mkdir("out", os.FileMode(0777))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
 
 	os.Mkdir("tmp", os.FileMode(0777))
 	defer os.RemoveAll("tmp")
@@ -101,7 +106,6 @@ func toRun(fileName string, c chan *exec.Cmd) {
 	}
 
 	cmd.Wait()
-
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
@@ -118,7 +122,10 @@ func exportToJson(filePath string, outputMap map[string]bool) error {
 	if err != nil {
 		return err
 	}
-	outputFile.Write(jsonArray)
+	_, err = outputFile.Write(jsonArray)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

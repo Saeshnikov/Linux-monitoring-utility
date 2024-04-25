@@ -9,7 +9,6 @@ import (
 )
 
 func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun func(string, chan *exec.Cmd), toRunLsof func()) error {
-
 	var wg sync.WaitGroup
 
 	timer := time.After(time.Duration(program_time) * time.Second)
@@ -57,8 +56,6 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun fu
 			}
 			prevProc = curProc
 			time.Sleep(time.Duration(bpftrace_time) * time.Second)
-
 		}
 	}
-
 }
