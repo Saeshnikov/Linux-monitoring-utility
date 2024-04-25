@@ -9,6 +9,7 @@ import (
 )
 
 func TestFindUnusedPackages(t *testing.T) {
+	rpmLayer.RpmBinPath = "/usr/bin/rpm"
 	allPackagesExample, usedPackagesExample, unusedPackagesExample := createTestArrays()
 	outputMap := allPackagesExample
 	type args struct {
