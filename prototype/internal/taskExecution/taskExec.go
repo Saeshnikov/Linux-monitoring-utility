@@ -17,6 +17,7 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun fu
 	var curProc *exec.Cmd = nil
 	var prevProc *exec.Cmd = nil
 	lsof_run := func() {
+		defer wg.Done()
 		fmt.Printf("Lsof started...\n")
 		toRunLsof()
 	}
@@ -42,6 +43,7 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun fu
 			go bpftrace_run()
 			curProc = <-c
 			if !flag {
+				wg.Add(1)
 				go lsof_run()
 				flag = true
 			}
@@ -60,4 +62,3 @@ func StartTasks(program_time uint, bpftrace_time uint, fileName string, toRun fu
 	}
 
 }
-
