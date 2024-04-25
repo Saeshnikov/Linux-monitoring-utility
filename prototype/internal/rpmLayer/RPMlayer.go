@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var RpmBinPath string
+
 func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) error {
 	usedPackages, err := FindUsedPackages(usedFiles)
 	if err != nil {
@@ -19,7 +21,7 @@ func RPMlayer(usedFiles []string, dirPath string, outputMap *map[string]bool) er
 
 func FindAllPackages() (map[string]bool, error) {
 	var allPackages = make(map[string]bool)
-	cmd := exec.Command("/usr/bin/rpm", "-qa")
+	cmd := exec.Command(RpmBinPath, "-qa")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
