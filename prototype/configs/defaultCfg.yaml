@@ -1,9 +1,0 @@
-scriptTime: 3600
-programTime: 86400
-configFileName: "/etc/lmuConf.yaml"
-outputPath: "."
-lsofBinPath: "/usr/bin/lsof"
-rpmBinPath: "/usr/bin/bpftrace"
-bpftraceBinPath: "/usr/bin/rpm"
-tmpPath: "/dist"
-tmpDelete: true

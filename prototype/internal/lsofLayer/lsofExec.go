@@ -7,8 +7,10 @@ import (
 	"strings"
 )
 
+var LsofBinPath string
+
 func LsofExec() ([]string, error) {
-	cmd := exec.Command("/usr/bin/lsof")
+	cmd := exec.Command(LsofBinPath)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err

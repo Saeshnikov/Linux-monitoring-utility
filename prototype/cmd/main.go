@@ -24,16 +24,15 @@ func main() {
 	os.Setenv("BPFTRACE_STRLEN", "128")
 
 	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "100000")
-  
-  
-	bpftrace_time, program_time, syscalls, outputPath, _, _, err := config.ConfigRead()
 
+	// bpftrace_time, program_time, syscalls, outputPath, _, _, err := config.ConfigRead()
 
 	syscalls, err := config.ConfigRead(&programConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	lsofLayer.LsofBinPath = programConfig.LsofBinPath
+	rpmLayer.RpmBinPath = programConfig.RpmBinPath
 	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls, programConfig.OutputPath)
 	if err != nil {
 		log.Fatal(err)
@@ -46,7 +45,6 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-
 
 	os.MkdirAll("tmp", os.FileMode(0777))
 
@@ -73,7 +71,7 @@ func main() {
 }
 
 func toRunLsof() {
-	arr, err := lsofLayer.LsofExec(programConfig.LsofBinPath)
+	arr, err := lsofLayer.LsofExec()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,7 +93,7 @@ func toRun(fileName string, c chan *exec.Cmd) {
 	}
 	defer file.Close()
 
-	cmd := exec.Command("/usr/bin/bpftrace", fileName)
+	cmd := exec.Command(programConfig.BpftraceBinPath, fileName)
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)

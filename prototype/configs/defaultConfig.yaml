@@ -1,0 +1,9 @@
+scriptTime: 100
+programTime: 3000
+SyscallsFileName: "/etc/lmu/lmuSyscalls.yaml"
+outputPath: "."
+lsofBinPath: "/usr/bin/lsof"
+rpmBinPath: "/usr/bin/rpm"
+bpftraceBinPath: "/usr/bin/bpftrace"
+tmpPath: "."
+tmpDelete: true

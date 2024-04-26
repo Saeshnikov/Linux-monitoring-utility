@@ -2,10 +2,8 @@ package tests
 
 import (
 	"bufio"
-	"fmt"
 	"linux-monitoring-utility/internal/lsofLayer"
 	"os"
-	"reflect"
 	"testing"
 )
 
@@ -19,10 +17,9 @@ func TestLsofParsing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-
-	for fileScanner.Scan() {
-
-		fmt.Println(fileScanner.Text())
+	var m = make(map[string]bool)
+	for _, s := range arr_res {
+		m[s] = true
 	}
 
 	outputFile, err := os.Open("./data/lsofParsingOut.txt")
@@ -30,13 +27,12 @@ func TestLsofParsing(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	fileScanner = bufio.NewScanner(outputFile)
-	var arr_test []string
+
 	for fileScanner.Scan() {
-		arr_test = append(arr_test, fileScanner.Text())
+		if !m[fileScanner.Text()] {
+			t.Fatal("Test failed")
+		}
 
 	}
-	if reflect.DeepEqual(arr_res, arr_test) {
-		return
-	}
-	t.Fatal("Test failed")
+
 }

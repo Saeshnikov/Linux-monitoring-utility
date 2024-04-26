@@ -13,20 +13,21 @@ type BpftraceConfig struct {
 }
 
 type ConfigFile struct {
-	ScriptTime      uint   `yaml:"scriptTime"`
-	ProgramTime     uint   `yaml:"programTime"`
-	ConfigFileName  string `yaml:"configFileName"`
-	OutputPath      string `yaml:"outputPath"`
-	LsofBinPath     string `yaml:"lsofBinPath"`
-	RpmBinPath      string `yaml:"rpmBinPath"`
-	BpftraceBinPath string `yaml:"bpftraceBinPath"`
-	TmpPath         string `yaml:"tmpPath"`
-	TmpDelete       bool   `yaml:"tmpDelete"`
+	ScriptTime       uint   `yaml:"scriptTime"`
+	ProgramTime      uint   `yaml:"programTime"`
+	SyscallsFileName string `yaml:"SyscallsFileName"`
+	OutputPath       string `yaml:"outputPath"`
+	LsofBinPath      string `yaml:"lsofBinPath"`
+	RpmBinPath       string `yaml:"rpmBinPath"`
+	BpftraceBinPath  string `yaml:"bpftraceBinPath"`
+	TmpPath          string `yaml:"tmpPath"`
+	TmpDelete        bool   `yaml:"tmpDelete"`
 }
 
 func configValidate(configStruct *ConfigFile) error {
+
 	if configStruct.ScriptTime >= configStruct.ProgramTime {
-		err := errors.New("Script time cannot be more than program time")
+		err := errors.New("script time cannot be more than program time")
 		return err
 	}
 
@@ -40,8 +41,8 @@ func configValidate(configStruct *ConfigFile) error {
 	}
 
 	//Checking existing of syscalls file
-	if configStruct.ConfigFileName != "/etc/lmuConf.yaml" {
-		if _, err := os.Stat(configStruct.ConfigFileName); errors.Is(err, os.ErrNotExist) {
+	if configStruct.SyscallsFileName != "/etc/lmu/lmuSyscalls.yaml" {
+		if _, err := os.Stat(configStruct.SyscallsFileName); errors.Is(err, os.ErrNotExist) {
 			if err != nil {
 				return err
 			}
@@ -49,7 +50,7 @@ func configValidate(configStruct *ConfigFile) error {
 	}
 
 	//Checking existing of rpm bin file
-	if configStruct.ConfigFileName != "/usr/bin/rpm" {
+	if configStruct.RpmBinPath != "/usr/bin/rpm" {
 		if _, err := os.Stat(configStruct.RpmBinPath); errors.Is(err, os.ErrNotExist) {
 			if err != nil {
 				return err
@@ -70,30 +71,59 @@ func configValidate(configStruct *ConfigFile) error {
 }
 
 func ConfigRead(configStruct *ConfigFile) ([]string, error) {
-	cfgFileFlag := false
-	//Checking if cfg flag provided
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "cfg" {
-			cfgFileFlag = true
-		}
-	})
 
-	if cfgFileFlag {
-		configFileName := flag.String("cfg", "../configs/defaultCfg.yaml", "Path to the .yaml config")
-		flag.Parse()
-		err := configFileRead(*configFileName, configStruct)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		err := cliRead(configStruct)
-		if err != nil {
-			return nil, err
-		}
+	var cliConf ConfigFile
+	var configFileName string
+	err := cliRead(&configFileName, &cliConf)
+	if err != nil {
+		return nil, err
+	}
+	err = configFileRead(configFileName, configStruct)
+	if err != nil {
+		return nil, err
+	}
+
+	if cliConf.ScriptTime != 0 {
+
+		configStruct.ScriptTime = cliConf.ScriptTime
+	}
+
+	if cliConf.ProgramTime != 0 {
+
+		configStruct.ProgramTime = cliConf.ProgramTime
+	}
+
+	if len(cliConf.SyscallsFileName) != 0 {
+
+		configStruct.SyscallsFileName = cliConf.SyscallsFileName
+	}
+	if len(cliConf.OutputPath) != 0 {
+
+		configStruct.OutputPath = cliConf.OutputPath
+	}
+	if len(cliConf.LsofBinPath) != 0 {
+
+		configStruct.LsofBinPath = cliConf.LsofBinPath
+	}
+	if len(cliConf.RpmBinPath) != 0 {
+
+		configStruct.RpmBinPath = cliConf.RpmBinPath
+	}
+	if len(cliConf.BpftraceBinPath) != 0 {
+
+		configStruct.BpftraceBinPath = cliConf.BpftraceBinPath
+	}
+	if len(cliConf.TmpPath) != 0 {
+
+		configStruct.TmpPath = cliConf.TmpPath
+	}
+	if !cliConf.TmpDelete {
+
+		configStruct.TmpDelete = cliConf.TmpDelete
 	}
 
 	//Validating config struct
-	err := configValidate(configStruct)
+	err = configValidate(configStruct)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +131,7 @@ func ConfigRead(configStruct *ConfigFile) ([]string, error) {
 	//Reading syscalls yaml file
 	var config BpftraceConfig
 
-	bpftraceYamlFile, err := os.ReadFile(configStruct.ConfigFileName)
+	bpftraceYamlFile, err := os.ReadFile(configStruct.SyscallsFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -130,21 +160,21 @@ func configFileRead(configFileName string, configStruct *ConfigFile) error {
 	return nil
 }
 
-func cliRead(configStruct *ConfigFile) error {
+func cliRead(configFileName *string, configStruct *ConfigFile) error {
+	flag.StringVar(configFileName, "cfg", "/etc/lmu/lmuConfig.yaml", "Path to the .yaml config")
 
 	//Reading command line arguments
-	configStruct.ScriptTime = *flag.Uint("t", 3600, "One bpftrace script working time") //BPFtrace script working time
-	configStruct.ProgramTime = *flag.Uint("T", 86400, "Program working time")           //Program working time
-	configStruct.ConfigFileName = *flag.String("c", "/etc/lmuConf.yaml", "Path to .yaml config file with syscalls")
-	configStruct.OutputPath = *flag.String("o", ".", "Path to the result")
-	configStruct.LsofBinPath = *flag.String("lsof", "/usr/bin/lsof", "Path to the lsof binary")
-	configStruct.BpftraceBinPath = *flag.String("bpf", "/usr/bin/bpftrace", "Path to the Bpftrace binary")
-	configStruct.RpmBinPath = *flag.String("rpm", "/usr/bin/rpm", "Path to the rpm binary")
-	configStruct.TmpPath = *flag.String("tmp", "/dist", "Path to the tmp folder")
-	configStruct.TmpDelete = *flag.Bool("tmpRM", true, "Delete tmp folder or not")
+	flag.UintVar(&configStruct.ScriptTime, "t", 0, "One bpftrace script working time") //BPFtrace script working time
+	flag.UintVar(&configStruct.ProgramTime, "T", 0, "Program working time")            //Program working time
+	flag.StringVar(&configStruct.SyscallsFileName, "s", "", "Path to .yaml config file with syscalls")
+	flag.StringVar(&configStruct.OutputPath, "o", "", "Path to the result")
+	flag.StringVar(&configStruct.LsofBinPath, "lsof", "", "Path to the lsof binary")
+	flag.StringVar(&configStruct.BpftraceBinPath, "bpf", "", "Path to the Bpftrace binary")
+	flag.StringVar(&configStruct.RpmBinPath, "rpm", "", "Path to the rpm binary")
+	flag.StringVar(&configStruct.TmpPath, "tmp", "", "Path to the tmp folder")
+	flag.BoolVar(&configStruct.TmpDelete, "tmpRM", true, "Delete tmp folder or not")
 
 	//Parsing CLI parameters
 	flag.Parse()
-
 	return nil
 }
