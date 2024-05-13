@@ -21,9 +21,6 @@ import (
 var programConfig config.ConfigFile
 
 func main() {
-	os.Setenv("BPFTRACE_STRLEN", "128")
-
-	os.Setenv("BPFTRACE_MAP_KEYS_MAX", "100000")
 
 	// bpftrace_time, program_time, syscalls, outputPath, _, _, err := config.ConfigRead()
 
@@ -31,7 +28,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	os.Setenv("BPFTRACE_STRLEN", programConfig.BPFTRACE_STRLEN)
+	os.Setenv("BPFTRACE_MAP_KEYS_MAX", programConfig.BPFTRACE_MAP_KEYS_MAX)
+
 	lsofLayer.LsofBinPath = programConfig.LsofBinPath
+	lsofLayer.DirToIgnore = programConfig.DirToIgnore
+	bpfParsing.DirToIgnore = programConfig.DirToIgnore
 	rpmLayer.RpmBinPath = programConfig.RpmBinPath
 	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls, programConfig.OutputPath)
 	if err != nil {

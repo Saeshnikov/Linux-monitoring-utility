@@ -13,15 +13,18 @@ type BpftraceConfig struct {
 }
 
 type ConfigFile struct {
-	ScriptTime       uint   `yaml:"scriptTime"`
-	ProgramTime      uint   `yaml:"programTime"`
-	SyscallsFileName string `yaml:"SyscallsFileName"`
-	OutputPath       string `yaml:"outputPath"`
-	LsofBinPath      string `yaml:"lsofBinPath"`
-	RpmBinPath       string `yaml:"rpmBinPath"`
-	BpftraceBinPath  string `yaml:"bpftraceBinPath"`
-	TmpPath          string `yaml:"tmpPath"`
-	TmpDelete        bool   `yaml:"tmpDelete"`
+	ScriptTime            uint     `yaml:"scriptTime"`
+	ProgramTime           uint     `yaml:"programTime"`
+	SyscallsFileName      string   `yaml:"SyscallsFileName"`
+	OutputPath            string   `yaml:"outputPath"`
+	LsofBinPath           string   `yaml:"lsofBinPath"`
+	RpmBinPath            string   `yaml:"rpmBinPath"`
+	BpftraceBinPath       string   `yaml:"bpftraceBinPath"`
+	TmpPath               string   `yaml:"tmpPath"`
+	TmpDelete             bool     `yaml:"tmpDelete"`
+	BPFTRACE_STRLEN       string   `yaml:"BPFTRACE_STRLEN"`
+	BPFTRACE_MAP_KEYS_MAX string   `yaml:"BPFTRACE_MAP_KEYS_MAX"`
+	DirToIgnore           []string `yaml:"DirToIgnore"`
 }
 
 func configValidate(configStruct *ConfigFile) error {

@@ -8,6 +8,7 @@ import (
 )
 
 var LsofBinPath string
+var DirToIgnore []string
 
 func LsofExec() ([]string, error) {
 	cmd := exec.Command(LsofBinPath)
@@ -37,7 +38,7 @@ func LsofParsing(outScanner *bufio.Scanner) ([]string, error) {
 	for outScanner.Scan() {
 		res := r.FindAllStringSubmatch(outScanner.Text(), -1)
 		if res != nil {
-			if len(res[0][1]) > 1 && len(strings.Split(res[0][1], "/proc/")) == 1 && len(strings.Split(res[0][1], "/dev/")) == 1 && len(strings.Fields(res[0][1])) == 1 {
+			if len(res[0][1]) > 1 && len(strings.Fields(res[0][1])) == 1 && ignoreDir(res[0][1]) {
 				arr[res[0][1]] = true
 			}
 
@@ -47,4 +48,13 @@ func LsofParsing(outScanner *bufio.Scanner) ([]string, error) {
 		out = append(out, k)
 	}
 	return out, nil
+}
+
+func ignoreDir(s string) bool {
+	for _, dir := range DirToIgnore {
+		if len(strings.Split(s, dir)) == 1 {
+			return false
+		}
+	}
+	return true
 }

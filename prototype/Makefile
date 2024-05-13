@@ -21,20 +21,14 @@ build:
 	go build -o $(GOBUILDPATH)/build/lmu $(CURDIR)/cmd/main.go
 
 .PHONY: install
-install: | $(DESTDIR)/lmu $(DESTDIR) 
+install: | $(DESTDIR) 
 	cp $(CURDIR)/configs/defaultConfig.yaml $(DESTDIR)/etc/lmu/lmuConfig.yaml
 	cp $(CURDIR)/configs/defaultSyscalls.yaml $(DESTDIR)/etc/lmu/lmuSyscalls.yaml
 	cp $(GOBUILDPATH)/build/lmu $(DESTDIR)/usr/bin/lmu
 
 $(DESTDIR):
-	mkdir $(DESTDIR) || true
-	mkdir $(DESTDIR)/etc || true
-	mkdir $(DESTDIR)/etc/lmu || true
-	mkdir $(DESTDIR)/usr || true
-	mkdir $(DESTDIR)/usr/bin || true
-
-$(DESTDIR)/lmu:
-	mkdir $(DESTDIR)/etc/lmu || true
+	mkdir -d $(DESTDIR)/etc/lmu || true
+	mkdir -d $(DESTDIR)/usr/bin || true
 
 .PHONY: test
 test:

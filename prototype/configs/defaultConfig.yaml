@@ -7,3 +7,9 @@ rpmBinPath: "/usr/bin/rpm"
 bpftraceBinPath: "/usr/bin/bpftrace"
 tmpPath: "."
 tmpDelete: true
+BPFTRACE_STRLEN : "128"
+BPFTRACE_MAP_KEYS_MAX : "100000"
+DirToIgnore:
+  - /proc/
+  - /dev/
+  - /sys/
