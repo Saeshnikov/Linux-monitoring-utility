@@ -7,6 +7,7 @@ import (
 )
 
 func TestLsofExec(t *testing.T) {
+	lsofLayer.LsofBinPath = "/usr/bin/lsof"
 	file, err := os.Create("/usr/tmp")
 	if err != nil {
 		t.Fatal(err.Error())
