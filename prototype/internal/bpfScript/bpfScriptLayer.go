@@ -27,7 +27,7 @@ const (
 var (
 	immutablePieces = map[string]string{
 		"BEGIN": "\n{\n\tprintf(" + `"Tracing file system syscalls... Hit Ctrl-C to end.\n"` + ");\n}\n",
-		"END":   "\n{\n\tprint(@filename);\n\tclear(@oldname);\n\tclear(@filename);\n\tclear(@name);\n\tclear(@fd);\n}",
+		"END":   "\n{\n\tprint(@filename);\n\tclear(@oldname);\n\tclear(@filename);\n\tclear(@name);\n\tclear(@fd);\n}\n",
 	}
 
 	tmplSimplCom, _ = template.New("SimplCom").Parse("tracepoint:syscalls:sys_enter_{{.SyscallName}}\n{\n\t@filename[str(args.{{.ArgCollected}})] = count();\n}\n")

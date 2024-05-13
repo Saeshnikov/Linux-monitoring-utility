@@ -16,10 +16,10 @@ func TestBpfScriptLayer(t *testing.T) {
 		expectedFile    string
 		expectedMessage string
 	}{
-		{[]string{}, "", "./defaultScriptCheck.bt", ""},
-		{[]string{"readlink", "readlinkat"}, "", "./generateScriptCheck.bt", ""},
+		{[]string{}, "", "./data/defaultScriptCheck.bt", ""},
+		{[]string{"readlink", "readlinkat"}, "", "./data/generateScriptCheck.bt", ""},
 		{[]string{"name_to_handle_at"}, "", "", "The system call 'name_to_handle_at' is not valid."},
-		{[]string{}, "./res/", "./defaultScriptCheck.bt", ""},
+		{[]string{}, "./res/", "./data/defaultScriptCheck.bt", ""},
 		{[]string{}, "./res/\t//", "", "The path './res/	//' could not be created."},
 	}
 
@@ -28,7 +28,7 @@ func TestBpfScriptLayer(t *testing.T) {
 			bpfScriptFile, err := bpfScript.GenerateBpfScript(tc.inputSyscalls, tc.inputPath)
 			if err != nil && err.Error() != tc.expectedMessage {
 				t.Error("Incorrectly generated file\n")
-			} else if !Equal(bpfScriptFile, tc.expectedFile) {
+			} else if !EqualFiles(bpfScriptFile, tc.expectedFile) {
 				t.Error("The generated file does not match the expected one\n")
 			}
 		})
@@ -36,7 +36,7 @@ func TestBpfScriptLayer(t *testing.T) {
 	os.RemoveAll("./res/")
 }
 
-func Equal(fileOld *os.File, fileCheck string) bool {
+func EqualFiles(fileOld *os.File, fileCheck string) bool {
 	if fileCheck == "" {
 		return true
 	}
