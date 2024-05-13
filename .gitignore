@@ -1,2 +1,5 @@
 prototype/build/
 prototype/dist/
+/build/
+result.json
+script.bt
