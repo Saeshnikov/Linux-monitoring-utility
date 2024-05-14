@@ -1,0 +1,51 @@
+BEGIN
+{
+	printf("Shared memory... Hit Ctrl-C to end.\n");
+	printf("%s %s %s %s\n", "COMM", "KEY", "SHMID", "TYPE");
+}
+
+tracepoint:syscalls:sys_enter_shmget
+{
+	@shmkey[tid] = args.key;
+}
+
+tracepoint:syscalls:sys_exit_shmget
+/@shmkey[tid]/
+{
+	@shmid[tid] = args.ret;
+}
+
+tracepoint:syscalls:sys_exit_shmat
+/@shmid[tid]/
+{
+	$type = "system v";
+	printf("%s %x %d %s\n", comm,  @shmkey[tid], @shmid[tid], $type);
+}
+
+
+kprobe:shm_open
+{
+	@name[tid] = arg0;
+}
+
+kretprobe:shm_open
+/@name[tid]/
+{
+	@posshmid[tid] = retval;
+}
+
+tracepoint:syscalls:sys_enter_mmap
+/@posshmid[tid]/
+{
+	$type = "posix";
+	// $fd = args.fd; // for cheking
+	printf("%s %x %d %s\n", comm, @name[tid], @posshmid[tid], $type);
+}
+
+END
+{
+    	clear(@shmkey);
+	clear(@shmid);
+	clear(@name);
+	clear(@posshmid);
+}

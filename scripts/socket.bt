@@ -1,0 +1,82 @@
+#ifndef BPFTRACE_HAVE_BTF
+#include <linux/socket.h>
+#include <net/sock.h>
+#else
+#include <sys/socket.h>
+#endif
+
+BEGIN
+{
+  printf("Tracing net connections. Hit Ctrl-C to end.\n");
+  printf("%-4s %-6s %-16s %4s\n", "SD", "TYPE", "COMM", "FD_SOCKET");
+}
+
+tracepoint:syscalls:sys_enter_connect
+{
+
+	$sk = ((struct sockaddr *) args.uservaddr);
+    @inet_family1[tid] = $sk->sa_family;
+    //print($sk->sa_family);
+    @fd1[tid] = args.fd;
+}
+
+tracepoint:syscalls:sys_exit_connect
+/@fd1[tid]/
+{
+    $ret = args.ret;
+    if ($ret == 0) {
+        if (@inet_family1[tid] == AF_LOCAL) {
+            printf("%-4s %-6s %-16s %4d\n", "C", "UNIX", comm, @fd1[tid]);
+        }
+        if (@inet_family1[tid] == AF_INET) {
+            printf("%-4s %-6s %-16s %4d\n", "C", "INET", comm, @fd1[tid]);
+        }
+        if (@inet_family1[tid] == AF_INET6) {
+            printf("%-4s %-6s %-16s %4d\n", "C", "INET6", comm, @fd1[tid]);
+        }
+    }
+    delete(@fd1[tid]);
+    delete(@inet_family1[tid]);
+}
+
+tracepoint:syscalls:sys_enter_accept
+{
+	$sk = ((struct sockaddr *) args.upeer_sockaddr);
+    @inet_family2[tid] = $sk->sa_family;
+    //print($sk->sa_family);
+    @fd2[tid] = args.fd;
+}
+
+tracepoint:syscalls:sys_exit_accept
+/@fd2[tid]/
+{
+
+    $ret = args.ret;
+    //printf("%-4s %-6d %-8d %-16s %4d\n", "A", $ret, pid, comm, @fd2[tid]);
+    if ($ret > 0) {
+        if (@inet_family2[tid] == AF_UNIX) {
+            printf("%-4s %-6s %-16s %4d\n", "A", "UNIX", comm, @fd2[tid]);
+        }
+        if (@inet_family2[tid] == AF_INET) {
+            printf("%-4s %-6s %-16s %4d\n", "A", "INET", comm, @fd2[tid]);
+        }
+        if (@inet_family2[tid] == AF_INET6) {
+            printf("%-4s %-6s %-16s %4d\n", "A", "INET6", comm, @fd2[tid]);
+        }
+    }
+    delete(@fd2[tid]);
+    delete(@inet_family2[tid]);
+}
+
+END
+{
+	clear(@fd1);
+	clear(@fd2);
+	clear(@inet_family1);
+	clear(@inet_family2);
+}
+
+
+
+
+

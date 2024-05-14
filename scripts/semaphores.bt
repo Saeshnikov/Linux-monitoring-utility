@@ -1,0 +1,35 @@
+BEGIN
+{
+	printf("Semaphores... Hit Ctrl-C to end.\n");
+	printf("%s %s %s %s\n", "COMM", "KEY", "SEMID", "NSEM");
+}
+
+tracepoint:syscalls:sys_enter_semget
+{
+	@semkey[tid] = args.key;
+	@nsems[tid] = args.nsem;
+}
+
+tracepoint:syscalls:sys_exit_semget
+/@semkey[tid]/
+{
+	@semid[tid] = args.ret;
+	//printf("%s %x %d %d\n", comm,  @semkey[tid], @semid[tid], @nsems[tid]);
+	//delete(@semkey[tid]);
+	//delete(@semid[tid]);
+	//delete(@nsems[tid]);
+}
+
+tracepoint:syscalls:sys_exit_semop
+/@semid[tid]/
+{
+	printf("%s %x %d %d\n", comm,  @semkey[tid], @semid[tid], @nsems[tid]);
+	delete(@nsems[tid]);
+}
+
+END
+{
+    	clear(@semkey);
+	clear(@semid);
+	clear(@nsems);
+}
