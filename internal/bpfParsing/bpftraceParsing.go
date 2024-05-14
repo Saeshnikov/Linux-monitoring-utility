@@ -38,7 +38,7 @@ func Parse(fileName string) ([]string, error) {
 
 func ignoreDir(s string) bool {
 	for _, dir := range DirToIgnore {
-		if len(strings.Split(s, dir)) == 1 {
+		if len(strings.Split(s, dir)) != 1 {
 			return false
 		}
 	}

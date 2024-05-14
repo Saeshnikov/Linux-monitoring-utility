@@ -52,7 +52,10 @@ func main() {
 	pathToTmp = programConfig.TmpPath
 	os.MkdirAll(pathToTmp+"/tmp", os.FileMode(0777))
 
-	defer os.RemoveAll(pathToTmp + "/tmp")
+	if programConfig.TmpDelete {
+		defer os.RemoveAll(pathToTmp + "/tmp")
+	}
+
 	outputMap, err := rpmLayer.FindAllPackages()
 	if err != nil {
 		log.Fatal(err)
