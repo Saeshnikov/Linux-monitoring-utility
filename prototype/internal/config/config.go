@@ -120,8 +120,8 @@ func ConfigRead(configStruct *ConfigFile) ([]string, error) {
 
 		configStruct.TmpPath = cliConf.TmpPath
 	}
-	if !cliConf.TmpDelete {
 
+	if !cliConf.TmpDelete {
 		configStruct.TmpDelete = cliConf.TmpDelete
 	}
 

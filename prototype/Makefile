@@ -27,8 +27,8 @@ install: | $(DESTDIR)
 	cp $(GOBUILDPATH)/build/lmu $(DESTDIR)/usr/bin/lmu
 
 $(DESTDIR):
-	mkdir -d $(DESTDIR)/etc/lmu || true
-	mkdir -d $(DESTDIR)/usr/bin || true
+	mkdir -p $(DESTDIR)/etc/lmu || true
+	mkdir -p $(DESTDIR)/usr/bin || true
 
 .PHONY: test
 test:

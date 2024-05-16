@@ -19,6 +19,7 @@ import (
 )
 
 var programConfig config.ConfigFile
+var pathToTmp string
 
 func main() {
 
@@ -48,10 +49,13 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	pathToTmp = programConfig.TmpPath
+	os.MkdirAll(pathToTmp+"/tmp", os.FileMode(0777))
 
-	os.MkdirAll("tmp", os.FileMode(0777))
+	if programConfig.TmpDelete {
+		defer os.RemoveAll(pathToTmp + "/tmp")
+	}
 
-	defer os.RemoveAll("tmp")
 	outputMap, err := rpmLayer.FindAllPackages()
 	if err != nil {
 		log.Fatal(err)
@@ -62,7 +66,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = toAnalyse("./tmp/", programConfig.OutputPath, &outputMap)
+	err = toAnalyse(pathToTmp+"/tmp/", programConfig.OutputPath, &outputMap)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,7 +82,7 @@ func toRunLsof() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	file, err := os.Create("./tmp/" + "lsofOutput")
+	file, err := os.Create(pathToTmp + "/tmp/" + "lsofOutput")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,7 +94,7 @@ func toRunLsof() {
 
 func toRun(fileName string, c chan *exec.Cmd) {
 
-	file, err := os.Create("./tmp/" + strconv.FormatInt(time.Now().Unix(), 10))
+	file, err := os.Create(pathToTmp + "/tmp/" + strconv.FormatInt(time.Now().Unix(), 10))
 	if err != nil {
 		log.Fatal(err)
 	}
