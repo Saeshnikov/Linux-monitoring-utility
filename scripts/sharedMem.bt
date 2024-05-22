@@ -1,3 +1,8 @@
+#ifndef BPFTRACE_HAVE_BTF
+#include <linux/sched.h>
+#include <linux/limits.h>
+#endif
+
 BEGIN
 {
 	printf("Shared memory... Hit Ctrl-C to end.\n");
@@ -18,8 +23,30 @@ tracepoint:syscalls:sys_exit_shmget
 tracepoint:syscalls:sys_exit_shmat
 /@shmid[tid]/
 {
+	$task = (struct task_struct *)curtask;
+	$part_path = $task->mm->exe_file->f_path.dentry->d_parent;
+	$i = 0;
+	@full_path_comm[$i] = $part_path->d_name.name;
+	$i = 1;
+
+	while ($i != 1000) {
+		$part_path = $part_path->d_parent;
+		@full_path_comm[$i] = $part_path->d_name.name;
+		if ((uint64)$part_path->d_inode->i_ino == 256) {
+			break;
+		}
+		$i = $i + 1;
+	}
+	printf("/");
+	while ($i != -1) {
+		$str_ = @full_path_comm[$i];
+		printf("%s/", str($str_));
+		$i = $i - 1;
+	}
+	printf("%s",comm);
+
 	$type = "system v";
-	printf("%s %x %d %s\n", comm,  @shmkey[tid], @shmid[tid], $type);
+	printf(" %x %d %s\n", @shmkey[tid], @shmid[tid], $type);
 }
 
 
@@ -37,15 +64,40 @@ kretprobe:shm_open
 tracepoint:syscalls:sys_enter_mmap
 /@posshmid[tid]/
 {
+	$task = (struct task_struct *)curtask;
+	$part_path = $task->mm->exe_file->f_path.dentry->d_parent;
+	$i = 0;
+	@full_path_comm[$i] = $part_path->d_name.name;
+	$i = 1;
+
+	while ($i != 1000) {
+		$part_path = $part_path->d_parent;
+		@full_path_comm[$i] = $part_path->d_name.name;
+		if ((uint64)$part_path->d_inode->i_ino == 256) {
+			break;
+		}
+		$i = $i + 1;
+	}
+	printf("/");
+	while ($i != -1) {
+		$str_ = @full_path_comm[$i];
+		printf("%s/", str($str_));
+		$i = $i - 1;
+	}
+	printf("%s",comm);
+
 	$type = "posix";
-	// $fd = args.fd; // for cheking
-	printf("%s %x %d %s\n", comm, @name[tid], @posshmid[tid], $type);
+	printf(" %x %d %s\n", @name[tid], @posshmid[tid], $type);
+	delete(@name[tid]);
+	delete(@posshmid[tid]);
 }
+
 
 END
 {
-    	clear(@shmkey);
+        clear(@shmkey);
 	clear(@shmid);
 	clear(@name);
 	clear(@posshmid);
+	clear(@full_path_comm);
 }
