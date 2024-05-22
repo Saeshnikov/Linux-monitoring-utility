@@ -1,35 +1,55 @@
+#ifndef BPFTRACE_HAVE_BTF
+#include <linux/sched.h>
+#include <linux/limits.h>
+#endif
+
 BEGIN
 {
 	printf("Semaphores... Hit Ctrl-C to end.\n");
-	printf("%s %s %s %s\n", "COMM", "KEY", "SEMID", "NSEM");
+	printf("%s %s %s\n", "COMM", "KEY", "SEMID");
 }
 
 tracepoint:syscalls:sys_enter_semget
 {
 	@semkey[tid] = args.key;
-	@nsems[tid] = args.nsem;
 }
 
 tracepoint:syscalls:sys_exit_semget
 /@semkey[tid]/
 {
 	@semid[tid] = args.ret;
-	//printf("%s %x %d %d\n", comm,  @semkey[tid], @semid[tid], @nsems[tid]);
-	//delete(@semkey[tid]);
-	//delete(@semid[tid]);
-	//delete(@nsems[tid]);
 }
 
 tracepoint:syscalls:sys_exit_semop
 /@semid[tid]/
 {
-	printf("%s %x %d %d\n", comm,  @semkey[tid], @semid[tid], @nsems[tid]);
-	delete(@nsems[tid]);
+	$task = (struct task_struct *)curtask;
+	$part_path = $task->mm->exe_file->f_path.dentry->d_parent;
+	$i = 0;
+	@full_path_comm[$i] = $part_path->d_name.name;
+	$i = 1;
+
+	while ($i != 1000) {
+		$part_path = $part_path->d_parent;
+		@full_path_comm[$i] = $part_path->d_name.name;
+		if ((uint64)$part_path->d_inode->i_ino == 256) {
+			break;
+		}
+		$i = $i + 1;
+	}
+	printf("/");
+	while ($i != -1) {
+		$str_ = @full_path_comm[$i];
+		printf("%s/", str($str_));
+		$i = $i - 1;
+	}
+	printf("%s",comm);
+	printf(" %x %d\n",  @semkey[tid], @semid[tid]);
 }
 
 END
 {
-    	clear(@semkey);
+        clear(@semkey);
 	clear(@semid);
-	clear(@nsems);
+	clear(@full_path_comm);
 }
