@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -57,10 +56,15 @@ func (t execUnitContinuous) getExecTime() time.Duration {
 
 var processes []*exec.Cmd
 
-func StartTasks(outDirPath string, toExec ...execUnit) {
+var hotExit chan bool
+var mutex sync.RWMutex
+
+func StartTasks(outDirPath string, toExec ...execUnit) error {
 	var wg sync.WaitGroup
 	processes = make([]*exec.Cmd, len(toExec))
-	outToFile := func(filename string, c <-chan bytes.Buffer) {
+
+	//function that writing programs output to {outDirPath}/tmp/{binary_filename.timestamp}
+	outToFile := func(filename string, c <-chan bytes.Buffer, errChan chan<- error) {
 		defer wg.Done()
 		b, ok := <-c
 		if !ok {
@@ -72,57 +76,150 @@ func StartTasks(outDirPath string, toExec ...execUnit) {
 
 		file, err := os.Create(outDirPath + "/tmp/" + filename + "." + strconv.FormatInt(time.Now().Unix(), 10))
 		if err != nil {
-			log.Fatal(err)
+			errChan <- err
+			return
 		}
 
 		file.Write(b.Bytes())
 	}
 
-	execOneShot := func(binPath string, args string, execCount uint) {
+	//function that execute one shot for multiple times (doesn't wait for ending previous)
+	execOneShot := func(index int, binPath string, args string, execCount uint, errChan chan error) {
 		defer wg.Done()
+
+		ons_run := func(p chan *exec.Cmd, c chan bytes.Buffer, errChan chan error) {
+			defer wg.Done()
+			toRunOneShot(binPath, args, c, p, errChan)
+		}
+
 		for execCount_ := 0; execCount_ < int(execCount); execCount_++ {
+
 			buf := make(chan bytes.Buffer, 1)
-			fmt.Printf("%s Started...\n", binPath)
-			toRunOneShot(binPath, args, buf)
+			p := make(chan *exec.Cmd, 1)
+			errChan_ := make(chan error, 1)
+
 			wg.Add(1)
-			go outToFile(binPath, buf)
+			go ons_run(p, buf, errChan_)
+			var p_ *exec.Cmd
+
+			select {
+			case p_ = <-p:
+			case err := <-errChan_:
+				errChan <- err
+				return
+			}
+			fmt.Printf("%s Started...\n", binPath)
+			mutex.Lock()
+			processes[index] = p_
+			mutex.Unlock()
+			wg.Add(1)
+			go outToFile(binPath, buf, errChan_)
+			select {
+			case err := <-errChan:
+				errChan <- err
+				return
+			default:
+			}
 		}
 	}
 
-	execContinuous := func(index int, binPath string, args string, execCount uint, execTime time.Duration) {
+	//function that execute contionuous for some time multiple times (starts new time is out, then ends previous)
+	execContinuous := func(index int, binPath string, args string, execCount uint, execTime time.Duration, errChan chan error) {
 		defer wg.Done()
-		con_run := func(p chan *exec.Cmd, c chan bytes.Buffer) {
+
+		con_run := func(p chan *exec.Cmd, c chan bytes.Buffer, errChan chan error) {
 			defer wg.Done()
-			toRunContinuous(binPath, args, p, c)
+			toRunContinuous(binPath, args, p, c, errChan)
 
 		}
+
 		var prevProc *exec.Cmd
 		p := make(chan *exec.Cmd, 1)
+		errChan_ := make(chan error, 1)
 		for execCount_ := 0; execCount_ < int(execCount); execCount_++ {
 			buf := make(chan bytes.Buffer, 1)
 			wg.Add(1)
-			go con_run(p, buf)
+			go con_run(p, buf, errChan_)
+			var p_ *exec.Cmd
+
+			select {
+			case p_ = <-p:
+			case err := <-errChan_:
+				errChan <- err
+				return
+			}
+
 			fmt.Printf("%s Started...\n", binPath)
-			processes[index] = <-p
+
+			mutex.Lock()
+			processes[index] = p_
+			mutex.Unlock()
 			if prevProc != nil {
+
 				err := prevProc.Process.Signal(os.Interrupt)
 				if err != nil {
-					intAllProcesses(err)
+					p_.Process.Signal(os.Interrupt)
+					errChan <- err
+
+					return
 				}
 				fmt.Printf("Stopping %s process with PID: %d\n", binPath, prevProc.Process.Pid)
 
 			}
+
+			mutex.RLock()
 			prevProc = processes[index]
+			mutex.RUnlock()
 			wg.Add(1)
-			go outToFile(binPath, buf)
-			time.Sleep(execTime)
+
+			timer := time.After(execTime)
+			select {
+			case <-buf:
+				errChan <- fmt.Errorf("unexpected end of execution %s (%d)", binPath, prevProc.Process.Pid)
+			case err := <-errChan_:
+				errChan <- err
+				return
+			case <-timer:
+			}
+			go outToFile(binPath, buf, errChan_)
 		}
 
 		err := prevProc.Process.Signal(os.Interrupt)
 		if err != nil {
-			intAllProcesses(err)
+			errChan <- err
+			return
 		}
 		fmt.Printf("Stopping %s process with PID: %d\n", binPath, prevProc.Process.Pid)
+	}
+
+	var last_con int
+	errChan := make(chan error, len(toExec))
+	for index, unit := range toExec {
+
+		switch v := unit.(type) {
+		case execUnitOneShot:
+		case execUnitContinuous:
+			wg.Add(1)
+			go execContinuous(index, unit.getBinPath(), unit.getArgs(), unit.getExecCount(), unit.(execUnitContinuous).getExecTime(), errChan)
+			last_con = index
+		default:
+			return fmt.Errorf("recieved unexpected type : %s", v)
+		}
+	}
+
+wait_for_con:
+	for {
+		select {
+		case err := <-errChan:
+			return err
+		default:
+			mutex.RLock()
+			if processes[last_con] != nil {
+				mutex.RUnlock()
+				break wait_for_con
+			}
+			mutex.RUnlock()
+		}
 	}
 
 	for index, unit := range toExec {
@@ -130,27 +227,48 @@ func StartTasks(outDirPath string, toExec ...execUnit) {
 		switch v := unit.(type) {
 		case execUnitOneShot:
 			wg.Add(1)
-			fmt.Println(unit.getBinPath())
-			go execOneShot(unit.getBinPath(), unit.getArgs(), unit.getExecCount())
+			go execOneShot(index, unit.getBinPath(), unit.getArgs(), unit.getExecCount(), errChan)
 		case execUnitContinuous:
-			wg.Add(1)
-			fmt.Println(unit.getBinPath())
-			go execContinuous(index, unit.getBinPath(), unit.getArgs(), unit.getExecCount(), unit.(execUnitContinuous).getExecTime())
 		default:
-			fmt.Printf("Recieved unexpected type : %s\n", v)
+			return fmt.Errorf("recieved unexpected type : %s", v)
 		}
 	}
+	waitCh := make(chan bool, 1)
+	go func() {
+		wg.Wait()
+		waitCh <- true
+	}()
 
-	wg.Wait()
+	select {
+	case <-waitCh:
+		return nil
+	case err := <-errChan:
+		if _, ok := <-hotExit; ok {
+			fmt.Println("HOT EXIT!")
+			return nil
+		} else {
+			IntAllProcesses()
+			return err
+		}
 
+	}
 }
 
-// poka skip
-func intAllProcesses(err error) {
-	log.Fatal(err)
+func IntAllProcesses() error {
+	hotExit = make(chan bool, 1)
+	hotExit <- true
+	mutex.RLock()
+	for _, cmd := range processes {
+		if cmd != nil {
+			cmd.Process.Signal(os.Interrupt)
+
+		}
+	}
+	mutex.RUnlock()
+	return nil
 }
 
-func toRunOneShot(binPath string, args string, c chan<- bytes.Buffer) {
+func toRunOneShot(binPath string, args string, c chan<- bytes.Buffer, p chan<- *exec.Cmd, errChan chan<- error) {
 	var cmd *exec.Cmd
 	if args != "" {
 		cmd = exec.Command(binPath, args)
@@ -160,13 +278,17 @@ func toRunOneShot(binPath string, args string, c chan<- bytes.Buffer) {
 
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		errChan <- err
+		return
 	}
 
 	reader := bufio.NewReader(pipe)
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
+		errChan <- err
+		return
 	}
+
+	p <- cmd
 
 	var buffer bytes.Buffer
 
@@ -180,7 +302,7 @@ func toRunOneShot(binPath string, args string, c chan<- bytes.Buffer) {
 	c <- buffer
 }
 
-func toRunContinuous(binPath string, args string, p chan<- *exec.Cmd, c chan<- bytes.Buffer) {
+func toRunContinuous(binPath string, args string, p chan<- *exec.Cmd, c chan<- bytes.Buffer, errChan chan<- error) {
 
 	var buffer bytes.Buffer
 
@@ -192,17 +314,19 @@ func toRunContinuous(binPath string, args string, p chan<- *exec.Cmd, c chan<- b
 	}
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		errChan <- err
+		return
 	}
 
 	reader := bufio.NewReader(pipe)
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
+		errChan <- err
+		return
 	}
+	p <- cmd
+
 	fmt.Printf("Procces is running as pid %d\n", cmd.Process.Pid)
 	line, err := reader.ReadString('\n')
-
-	p <- cmd
 
 	for err == nil {
 		buffer.WriteString(line)

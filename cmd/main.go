@@ -63,7 +63,10 @@ func main() {
 	lsof := taskExecution.NewExecUnitOneShot("/usr/bin/lsof", "", 1)
 	bpf := taskExecution.NewExecUnitContinuous(programConfig.BpftraceBinPath, bpfScriptFile.Name(), uint(programConfig.ProgramTime/programConfig.ScriptTime), time.Duration(programConfig.ScriptTime)*time.Second)
 
-	taskExecution.StartTasks(pathToTmp, *lsof, *bpf)
+	err = taskExecution.StartTasks(pathToTmp, *lsof, *bpf)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = toAnalyse(pathToTmp+"/tmp/", programConfig.OutputPath, &outputMap)
 	if err != nil {
