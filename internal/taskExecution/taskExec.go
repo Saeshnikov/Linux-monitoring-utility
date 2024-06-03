@@ -13,17 +13,51 @@ import (
 	"time"
 )
 
-type ExecUnit struct {
-	BinPath      string
-	Args         string
-	ExecCount    uint
-	IsContinuous bool
-	ExecTime     time.Duration
+type execUnit interface {
+	getBinPath() string
+	getArgs() string
+	getExecCount() uint
+}
+
+type execUnitOneShot struct {
+	binPath   string
+	args      string
+	execCount uint
+}
+
+type execUnitContinuous struct {
+	execUnitOneShot
+	execTime time.Duration
+}
+
+func NewExecUnitContinuous(binPath string, args string, execCount uint, execTime time.Duration) *execUnitContinuous {
+	ExecUnitOneShot := execUnitOneShot{binPath: binPath, args: args, execCount: execCount}
+	return &execUnitContinuous{execUnitOneShot: ExecUnitOneShot, execTime: execTime}
+}
+
+func NewExecUnitOneShot(binPath string, args string, execCount uint) *execUnitOneShot {
+	return &execUnitOneShot{binPath: binPath, args: args, execCount: execCount}
+}
+
+func (t execUnitOneShot) getBinPath() string {
+	return t.binPath
+}
+
+func (t execUnitOneShot) getArgs() string {
+	return t.args
+}
+
+func (t execUnitOneShot) getExecCount() uint {
+	return t.execCount
+}
+
+func (t execUnitContinuous) getExecTime() time.Duration {
+	return t.execTime
 }
 
 var processes []*exec.Cmd
 
-func StartTasks(toExec []ExecUnit, outDirPath string) {
+func StartTasks(outDirPath string, toExec ...execUnit) {
 	var wg sync.WaitGroup
 	processes = make([]*exec.Cmd, len(toExec))
 	outToFile := func(filename string, c <-chan bytes.Buffer) {
@@ -93,12 +127,17 @@ func StartTasks(toExec []ExecUnit, outDirPath string) {
 
 	for index, unit := range toExec {
 
-		if !unit.IsContinuous {
+		switch v := unit.(type) {
+		case execUnitOneShot:
 			wg.Add(1)
-			go execOneShot(unit.BinPath, unit.Args, unit.ExecCount)
-		} else {
+			fmt.Println(unit.getBinPath())
+			go execOneShot(unit.getBinPath(), unit.getArgs(), unit.getExecCount())
+		case execUnitContinuous:
 			wg.Add(1)
-			go execContinuous(index, unit.BinPath, unit.Args, unit.ExecCount, unit.ExecTime)
+			fmt.Println(unit.getBinPath())
+			go execContinuous(index, unit.getBinPath(), unit.getArgs(), unit.getExecCount(), unit.(execUnitContinuous).getExecTime())
+		default:
+			fmt.Printf("Recieved unexpected type : %s\n", v)
 		}
 	}
 
