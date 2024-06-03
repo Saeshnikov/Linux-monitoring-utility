@@ -23,15 +23,13 @@ build:
 .PHONY: install
 install: install_config install_binary
 	
-	
-
 .PHONY: install_config
 install_config:| $(DESTDIR)/etc/lmu 
 	cp $(CURDIR)/configs/defaultConfig.yaml $(DESTDIR)/etc/lmu/lmuConfig.yaml
 	cp $(CURDIR)/configs/defaultSyscalls.yaml $(DESTDIR)/etc/lmu/lmuSyscalls.yaml
 
 .PHONY: install_binary
-install_config:| $(DESTDIR)/usr/bin
+install_binary:| $(DESTDIR)/usr/bin
 	cp $(GOBUILDPATH)/build/lmu $(DESTDIR)/usr/bin/lmu
 
 
