@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	bpfParsing "linux-monitoring-utility/internal/bpfParsing"
+	bpfParsing "linux-monitoring-utility/internal/bpfParsing/bpftraceParsing"
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
 	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
