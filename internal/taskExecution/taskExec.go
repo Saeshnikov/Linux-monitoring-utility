@@ -12,48 +12,6 @@ import (
 	"time"
 )
 
-type execUnit interface {
-	getBinPath() string
-	getArgs() string
-	getExecCount() uint
-}
-
-type execUnitOneShot struct {
-	binPath   string
-	args      string
-	execCount uint
-}
-
-type execUnitContinuous struct {
-	execUnitOneShot
-	execTime time.Duration
-}
-
-func NewExecUnitContinuous(binPath string, args string, execCount uint, execTime time.Duration) *execUnitContinuous {
-	ExecUnitOneShot := execUnitOneShot{binPath: binPath, args: args, execCount: execCount}
-	return &execUnitContinuous{execUnitOneShot: ExecUnitOneShot, execTime: execTime}
-}
-
-func NewExecUnitOneShot(binPath string, args string, execCount uint) *execUnitOneShot {
-	return &execUnitOneShot{binPath: binPath, args: args, execCount: execCount}
-}
-
-func (t execUnitOneShot) getBinPath() string {
-	return t.binPath
-}
-
-func (t execUnitOneShot) getArgs() string {
-	return t.args
-}
-
-func (t execUnitOneShot) getExecCount() uint {
-	return t.execCount
-}
-
-func (t execUnitContinuous) getExecTime() time.Duration {
-	return t.execTime
-}
-
 var processes []*exec.Cmd
 
 var hotExit chan bool
@@ -62,7 +20,6 @@ var mutex sync.RWMutex
 func StartTasks(outDirPath string, toExec ...execUnit) error {
 	var wg sync.WaitGroup
 	processes = make([]*exec.Cmd, len(toExec))
-
 	//function that writing programs output to {outDirPath}/tmp/{binary_filename.timestamp}
 	outToFile := func(filename string, c <-chan bytes.Buffer, errChan chan<- error) {
 		defer wg.Done()
@@ -160,7 +117,6 @@ func StartTasks(outDirPath string, toExec ...execUnit) error {
 				if err != nil {
 					p_.Process.Signal(os.Interrupt)
 					errChan <- err
-
 					return
 				}
 				fmt.Printf("Stopping %s process with PID: %d\n", binPath, prevProc.Process.Pid)
@@ -170,17 +126,18 @@ func StartTasks(outDirPath string, toExec ...execUnit) error {
 			mutex.RLock()
 			prevProc = processes[index]
 			mutex.RUnlock()
-			wg.Add(1)
 
 			timer := time.After(execTime)
 			select {
 			case <-buf:
 				errChan <- fmt.Errorf("unexpected end of execution %s (%d)", binPath, prevProc.Process.Pid)
+				return
 			case err := <-errChan_:
 				errChan <- err
 				return
 			case <-timer:
 			}
+			wg.Add(1)
 			go outToFile(binPath, buf, errChan_)
 		}
 
@@ -243,11 +200,13 @@ wait_for_con:
 	case <-waitCh:
 		return nil
 	case err := <-errChan:
-		if _, ok := <-hotExit; ok {
+		if hotExit != nil && <-hotExit {
 			fmt.Println("HOT EXIT!")
+			<-waitCh
 			return nil
 		} else {
 			IntAllProcesses()
+			<-waitCh
 			return err
 		}
 
@@ -265,6 +224,7 @@ func IntAllProcesses() error {
 		}
 	}
 	mutex.RUnlock()
+	close(hotExit)
 	return nil
 }
 
