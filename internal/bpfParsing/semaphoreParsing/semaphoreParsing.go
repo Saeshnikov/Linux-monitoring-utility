@@ -16,7 +16,6 @@ type ParsingData struct {
 	PathOfExecutableFile1, PathOfExecutableFile2 string
 	WayOfInteraction                             Interaction
 }
-
 //----------------------------------------------------------------
 
 type SemaphoreInfo struct {
@@ -42,7 +41,10 @@ func Parse(fileName string) ([]ParsingData, error) {
 	for fileScanner.Scan() {
 		arr := strings.Fields(fileScanner.Text())
 		if len(arr) == 3 {
-			semArr = append(semArr, semaphoreData{pathOfExecutableFile: arr[0], key: arr[1], id: arr[2]})
+			sem := semaphoreData{pathOfExecutableFile: arr[0], key: arr[1], id: arr[2]}
+			if !contains(semArr, sem) {
+				semArr = append(semArr, sem)
+			}
 		}
 	}
 
@@ -50,15 +52,23 @@ func Parse(fileName string) ([]ParsingData, error) {
 	return parsingArr, nil
 }
 
+func contains(semArr []semaphoreData, sem semaphoreData) bool {
+	for _, s := range semArr {
+		if sem == s {
+			return true
+		}
+	}
+	return false
+}
+
 func findConnection(semArr []semaphoreData) []ParsingData {
 	var parsingArr []ParsingData
 	for i := 0; i < len(semArr); i++ {
-		for j := 1; j < len(semArr); j++ {
+		for j := i + 1; j < len(semArr); j++ {
 			if semArr[i].id == semArr[j].id &&
 				semArr[i].pathOfExecutableFile != semArr[j].pathOfExecutableFile {
 				semInfo := SemaphoreInfo{Ipc: "by semaphore", Id: semArr[i].id}
 				parsingArr = append(parsingArr, ParsingData{semArr[i].pathOfExecutableFile, semArr[j].pathOfExecutableFile, semInfo})
-				semArr[j].id = "" //!!!!!!!!!!!!1
 			}
 		}
 	}
