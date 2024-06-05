@@ -6,6 +6,7 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
+#define SEM_KEY 0x12345
 
 int main(int argc, char *argv[])
 {
@@ -15,7 +16,7 @@ int main(int argc, char *argv[])
     int counter;
     struct sembuf buf[2];
     key = ftok("./one_two", 1);
-    semid = semget(key, 2, 0666 | IPC_CREAT);
+    semid = semget(SEM_KEY, 2, 0666 | IPC_CREAT);
     buf[0].sem_num = 0;
     buf[0].sem_flg = SEM_UNDO;
     buf[1].sem_num = 1;
