@@ -1,30 +1,15 @@
-# testing_overall_work.sh
-Данный bash-скрипт предназначен для проверки корректности работы `prototype`.
+# Информация о собираемых метриках
 
-## Описание ##
-Общее: 
-* Пользователю на систему устанавливается пакет с текстовым редакотором `emacs`
-* Ожидаемые результаты:
-  <br>После завершения работы `prototype`, в результирующих файлах не должны находиться пакеты, файл которых открываются в скрипте, но должен быть установленный пакет `emacs-27.2-150400.3.6.1.x86-64`.
-          
-Скрипт состоит из трех частей:
-1. Первая (получение пакетов):
-      - Получает количество пакетов, установленных на систему.
-      - Определяет % пакетов от общего числа, которые не будут открываться bash-скриптом (20%).
-      - Получает список все установленных на системе пакетов.
-2. Вторая (проверка неиспользуемого пакета):
-      - Скачивает из интернета и устанавливает пакет `emacs` (данный пакет не будет расположен в списке пакетов из предыдущего этапа, которые могут быть откыты скриптом).
-      - Запускает ожидание на 10 минут, в течении которого необходимо запустить прототип.
-3. Третья (проверка используемых пакетов):
-      - Генерирует рандомное число в диапозоне, верхней границей которого является общее число пакетов на системе и берет соответствующий пакет из списка, полученного на первом этапе.
-      - Использует `rpm -ql` для определения файлов, принадлежащих пакету и берет первый из них.
-      - Открывает файл пакета, который точно есть на системе.
-  
-## Использование ##
-```
-$ chmod +x testing_overall_work.sh
-$ ./testing_overall_work.sh
-```
-`!` Требования: 
-<br>        - запускаемый `prototype` должен работать не меньше, чем работает `bash-скрипт`
-<br>        - должен быть доступ к интернету для скачивания неиспользуемого пакета
+| Пункт мониторинга | bpftrace-скрипт| Собираемые данные | Установление связей |
+| :---: | --- | --- | --- |
+| Сокеты | `socket.bt` | - полный путь исполняемого файла <br>- тип syscall (accept/connect) <br>- протокол (UNIX, INET, INET6) <br>- файловый дескриптор сокета |  Пример вывода: <br>*`Attaching 5 probes...` <br> `/snapshot/usr/bin/VBoxClient C UNIX 7` <br>`/snapshot/usr/bin/X ` <br>`/home/anna/Desktop/bpftrace/socket/socket_server  `<br>`/home/anna/Desktop/bpftrace/socket/socket_client C INET 3` <br>`/snapshot/usr/bin/VBoxClient C UNIX 7` <br>`/snapshot/usr/sbin/nscd C INET 18` <br>`/snapshot/usr/sbin/nscd C INET 18` <br>`/snapshot/usr/sbin/nscd C INET 18`<br>`/snapshot/usr/lib/snapd/snapd C UNIX 3` <br>`/snapshot/usr/bin/VBoxClient C UNIX 7` <br>`/home/anna/Desktop/bpftrace/socket/socket_server A INET 3` <br>`/home/anna/Desktop/bpftrace/socket/socket_client C INET 3` <br>`/snapshot/usr/bin/VBoxClient C UNIX 7`*  <br><br>Определение взаимодействующих процессов будет производится на основе соотношения типа syscall (accept|connect) и файлового дескриптора сокета. |
+| Именованные каналы (SystemV/Posix) | `namedpipes.bt` | - полный путь исполняемого файла <br>- файловый дескриптор канала <br>- имя канала | Пример вывода: <br>*`Attaching 12 probes...`<br>`/home/anna/Desktop/bpftrace/pipe/fifoserver.out 3 MYFIFO`<br>`/home/anna/Desktop/bpftrace/pipe/fifoserver.out 4 MYFIFO`<br>`/home/anna/Desktop/bpftrace/pipe/fifoserver.out 5 MYFIFO`<br>`/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2`<br>`/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2`<br>`/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2`<br>`/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2`<br>`/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2`* <br><br>Взаимодейтсиве определяется двумя способами: <br>1. Соотнести по имени канала в результирующем файле текущего скрипта. <br>2. Соотнести полный путь исполняемого файла с файлом в который он пишнт/читает по результатам работы скрипта `fsorw.bt`. |
+| Семафоры (SystemV) | `semaphores.bt` | - полный путь исполняемого файла <br>- key семафорв (16Ссч) <br>- id семафорв |  Пример вывода: <br>*`Attaching 6 probes...`<br>`/home/anna/Desktop/bpftrace/IPC/semtest 12345 4`<br>`/home/anna/Desktop/bpftrace/IPC/semtest 12345 4`<br>`/home/anna/Desktop/bpftrace/IPC/semtest 12345 4`<br>`/home/anna/Desktop/bpftrace/IPC/semtest 12345 4`* <br><br>Здесь взаимодейтсиве определяется не между файлами, а различних файлов с одном и тем же семафором, сделать это возможно через соотношение одинаковых id и полных путей фалов.|
+| Общая память (SystemV/Posix) | `sharedMem.bt` | - полный путь исполняемого файла <br>- id участка шареной памяти <br>- тип (SystemV/Posix) | Аналогично предыдущему варианту, рассматривается взаимодействие "одного ко многим". |
+| Чтение/запись одного файла в другой | `fsorw.bt` | - полный путь исполняемого файла <br>- файловый дескриптор открываемого им файла <br>- полный путь к открываемому файлу <br>- кол-во считанных байт <br>- кол-во записанных байт | Пример вывода: <br>*`Attaching 51 probes...`<br>`/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0`<br>`/home/anna/Desktop/bpftrace/pipe/fifoserver.out 3 /lib64/libc.so.6 832 0`<br>`/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0`<br>`/home/anna/Desktop/bpftrace/pipe/fifoclient.out 3 /lib64/libc.so.6 832 0`<br>`/home/anna/Desktop/bpftrace/pipe/fifoclient.out 3 MYFIFO 0 14`<br>`/home/anna/Desktop/bpftrace/pipe/fifoserver.out 4 MYFIFO 3 0`<br>`/home/anna/Desktop/bpftrace/pipe/fifoserver.out 5 MYFIFO 3 0`<br>`/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0`<br>`/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0`<br>`/snapshot/usr/bin/plasmashell -1 / 8 0`<br>`/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0`<br>`/home/anna/Desktop/bpftrace/IPC/shmcreate 3 /lib64/libc.so.6 832 0`<br>`/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0`<br>`/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0`<br>`/snapshot/usr/bin/bash 3  0 5`<br>`/home/anna/Desktop/bpftrace/IPC/shmwrite 3 /lib64/libc.so.6 832 0`<br>`/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0`<br>`/home/anna/Desktop/bpftrace/IPC/shmrmid 3 /lib64/libc.so.6 832 0`* <br><br>Результат работы этого скрипта может быть использован для установление взаимосвязи между процессами. |
+
+> Присутствует ограничение на вложенность файловой системы с глубиной вложенности в 3000.
+
+### Пункты мониторинга, которые нет возможности собирать:
+   - Неименнованные канал (из-за специфики системного вызова не может получить fd канала, для дальнейшей фильтрации других системных вызовов по нему) `!` Однако, косвенно, взаимодействие можно определить с помощью скрипта `fsorw.bt`.
+   - Семафоры (Posix) (bpftrace не поддерживает ни один тип зондов для данного типа ipc)

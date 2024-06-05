@@ -1,0 +1,62 @@
+#ifndef BPFTRACE_HAVE_BTF
+#include <linux/sched.h>
+#endif
+
+BEGIN
+{
+	printf("Named Pipes... Hit Ctrl-C to end.\n");
+	printf("%-16s %4s %s\n", "COMM", "FD", "PIPE");
+}
+
+tracepoint:syscalls:sys_enter_mknod,
+tracepoint:syscalls:sys_enter_mknodat
+{
+	if ((args.mode & 0170000) == 0010000) {
+		@pipename[tid] = args.filename;
+	}
+}
+
+tracepoint:syscalls:sys_exit_open,
+tracepoint:syscalls:sys_exit_openat,
+tracepoint:syscalls:sys_exit_execve,
+tracepoint:syscalls:sys_exit_execveat,
+tracepoint:syscalls:sys_exit_openat2,
+tracepoint:syscalls:sys_exit_open_tree,
+tracepoint:syscalls:sys_exit_statx,
+tracepoint:syscalls:sys_exit_fspick,
+tracepoint:syscalls:sys_exit_open_by_handle_at,
+/@pipename[tid]/
+{
+	$ret = args.ret;
+	$fd = $ret >= 0 ? $ret : -1;
+	$errno = $ret >= 0 ? 0 : - $ret;
+
+	$task = (struct task_struct *)curtask;
+	$part_path = $task->mm->exe_file->f_path.dentry->d_parent;
+	$i = 0;
+	@full_path_comm[$i] = $part_path->d_name.name;
+	$i = 1;
+
+	while ($i != 3000) {
+		$part_path = $part_path->d_parent;
+		@full_path_comm[$i] = $part_path->d_name.name;
+		if ((uint64)$part_path->d_inode->i_ino == 256) {
+			break;
+		}
+		$i = $i + 1;
+	}
+	printf("\n/");
+	while ($i != -1) {
+		$str_ = @full_path_comm[$i];
+		printf("%s/", str($str_));
+		$i = $i - 1;
+	}
+	printf("%s ",comm);
+	printf("%d %s", $fd, str(@pipename[tid]));
+}
+
+END
+{
+    clear(@pipename);
+	clear(@full_path_comm);
+}
