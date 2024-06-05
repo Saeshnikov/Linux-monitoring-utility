@@ -16,7 +16,6 @@ type ParsingData struct {
 	PathOfExecutableFile1, PathOfExecutableFile2 string
 	WayOfInteraction                             Interaction
 }
-
 //----------------------------------------------------------------
 
 type SocketInfo struct {
@@ -42,7 +41,10 @@ func Parse(fileName string) ([]ParsingData, error) {
 	for fileScanner.Scan() {
 		arr := strings.Fields(fileScanner.Text())
 		if len(arr) == 4 {
-			sockArr = append(sockArr, socketData{pathOfExecutableFile: arr[0], syscallType: arr[1], protocol: arr[2], fileDescriptor: arr[3]})
+			sock := socketData{pathOfExecutableFile: arr[0], syscallType: arr[1], protocol: arr[2], fileDescriptor: arr[3]}
+			if !contains(sockArr, sock) {
+				sockArr = append(sockArr, sock)
+			}
 		}
 	}
 
@@ -50,16 +52,24 @@ func Parse(fileName string) ([]ParsingData, error) {
 	return parsingArr, nil
 }
 
+func contains(sockArr []socketData, sock socketData) bool {
+	for _, s := range sockArr {
+		if sock == s {
+			return true
+		}
+	}
+	return false
+}
+
 func findConnection(sockArr []socketData) []ParsingData {
 	var parsingArr []ParsingData
 	for i := 0; i < len(sockArr); i++ {
-		for j := 1; j < len(sockArr); j++ {
+		for j := i + 1; j < len(sockArr); j++ {
 			if sockArr[i].fileDescriptor == sockArr[j].fileDescriptor &&
 				sockArr[i].syscallType != sockArr[j].syscallType &&
 				sockArr[i].protocol == sockArr[j].protocol {
 				sockInfo := SocketInfo{Ipc: "by socket", Protocol: sockArr[i].protocol, FileDescriptor: sockArr[i].fileDescriptor}
 				parsingArr = append(parsingArr, ParsingData{sockArr[i].pathOfExecutableFile, sockArr[j].pathOfExecutableFile, sockInfo})
-				sockArr[j].fileDescriptor = "" //!!!!!!!!!!!!1
 			}
 		}
 	}
