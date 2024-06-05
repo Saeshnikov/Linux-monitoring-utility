@@ -20,7 +20,8 @@ tracepoint:syscalls:sys_exit_semget
 	@semid[tid] = args.ret;
 }
 
-tracepoint:syscalls:sys_exit_semop
+tracepoint:syscalls:sys_enter_semop,
+tracepoint:syscalls:sys_enter_semtimedop,
 /@semid[tid]/
 {
 	$task = (struct task_struct *)curtask;
@@ -29,7 +30,7 @@ tracepoint:syscalls:sys_exit_semop
 	@full_path_comm[$i] = $part_path->d_name.name;
 	$i = 1;
 
-	while ($i != 1000) {
+	while ($i != 3000) {
 		$part_path = $part_path->d_parent;
 		@full_path_comm[$i] = $part_path->d_name.name;
 		if ((uint64)$part_path->d_inode->i_ino == 256) {
@@ -37,19 +38,19 @@ tracepoint:syscalls:sys_exit_semop
 		}
 		$i = $i + 1;
 	}
-	printf("/");
+	printf("\n/");
 	while ($i != -1) {
 		$str_ = @full_path_comm[$i];
 		printf("%s/", str($str_));
 		$i = $i - 1;
 	}
-	printf("%s",comm);
-	printf(" %x %d\n",  @semkey[tid], @semid[tid]);
+	printf("%s ",comm);
+	printf("%x %d", @semkey[tid], @semid[tid]);
 }
 
 END
 {
-        clear(@semkey);
+    	clear(@semkey);
 	clear(@semid);
 	clear(@full_path_comm);
 }
