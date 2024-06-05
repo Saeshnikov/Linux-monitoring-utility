@@ -9,13 +9,13 @@
 BEGIN
 {
   printf("Tracing net connections. Hit Ctrl-C to end.\n");
-  printf("%-16s %-4s %-6s %4s\n", "COMM", "SD", "TYPE", "FD_SOCKET");
+  printf("%-16s %-4s %-6s %4s\n", "COMM", "SC", "TYPE", "FD_SOCKET");
 }
 
 tracepoint:syscalls:sys_enter_connect
 {
 
-    $sk = ((struct sockaddr *) args.uservaddr);
+	$sk = ((struct sockaddr *) args.uservaddr);
     @inet_family1[tid] = $sk->sa_family;
     @fd1[tid] = args.fd;
 }
@@ -23,13 +23,13 @@ tracepoint:syscalls:sys_enter_connect
 tracepoint:syscalls:sys_exit_connect
 /@fd1[tid]/
 {
-        $task = (struct task_struct *)curtask;
-        $part_path = $task->mm->exe_file->f_path.dentry->d_parent;
+    $task = (struct task_struct *)curtask;
+    $part_path = $task->mm->exe_file->f_path.dentry->d_parent;
 	$i = 0;
 	@full_path_comm[$i] = $part_path->d_name.name;
 	$i = 1;
 
-	while ($i != 1000) {
+	while ($i != 3000) {
 		$part_path = $part_path->d_parent;
 		@full_path_comm[$i] = $part_path->d_name.name;
 		if ((uint64)$part_path->d_inode->i_ino == 256) {
@@ -37,33 +37,33 @@ tracepoint:syscalls:sys_exit_connect
 		}
 		$i = $i + 1;
 	}
-	printf("/");
+	printf("\n/");
 	while ($i != -1) {
 		$str_ = @full_path_comm[$i];
 		printf("%s/", str($str_));
 		$i = $i - 1;
 	}
-	printf("%s",comm);
+	printf("%s ",comm);
 
     $ret = args.ret;
     if ($ret == 0) {
-        if (@inet_family1[tid] == AF_LOCAL) {
-            printf(" %-4s %-6s %4d\n", "C", "UNIX", @fd1[tid]);
+        if (@inet_family1[tid] == AF_UNIX) {
+            printf("%s %s %d", "C", "UNIX", @fd1[tid]);
         }
         if (@inet_family1[tid] == AF_INET) {
-            printf(" %-4s %-6s %4d\n", "C", "INET", @fd1[tid]);
+            printf("%s %s %d", "C", "INET", @fd1[tid]);
         }
         if (@inet_family1[tid] == AF_INET6) {
-            printf(" %-4s %-6s %4d\n", "C", "INET6", @fd1[tid]);
+            printf("%s %s %d", "C", "INET6", @fd1[tid]);
         }
     }
     delete(@fd1[tid]);
     delete(@inet_family1[tid]);
 }
 
-tracepoint:syscalls:sys_enter_accept
+tracepoint:syscalls:sys_enter_bind
 {
-    $sk = ((struct sockaddr *) args.upeer_sockaddr);
+	$sk = ((struct sockaddr *) args.umyaddr);
     @inet_family2[tid] = $sk->sa_family;
     @fd2[tid] = args.fd;
 }
@@ -71,13 +71,13 @@ tracepoint:syscalls:sys_enter_accept
 tracepoint:syscalls:sys_exit_accept
 /@fd2[tid]/
 {
-        $task = (struct task_struct *)curtask;
-        $part_path = $task->mm->exe_file->f_path.dentry->d_parent;
+    $task = (struct task_struct *)curtask;
+    $part_path = $task->mm->exe_file->f_path.dentry->d_parent;
 	$i = 0;
 	@full_path_comm[$i] = $part_path->d_name.name;
 	$i = 1;
 
-	while ($i != 1000) {
+	while ($i != 3000) {
 		$part_path = $part_path->d_parent;
 		@full_path_comm[$i] = $part_path->d_name.name;
 		if ((uint64)$part_path->d_inode->i_ino == 256) {
@@ -85,24 +85,24 @@ tracepoint:syscalls:sys_exit_accept
 		}
 		$i = $i + 1;
 	}
-	printf("/");
+	printf("\n/");
 	while ($i != -1) {
 		$str_ = @full_path_comm[$i];
 		printf("%s/", str($str_));
 		$i = $i - 1;
 	}
-	printf("%s",comm);
+	printf("%s ",comm);
 
     $ret = args.ret;
     if ($ret > 0) {
         if (@inet_family2[tid] == AF_UNIX) {
-            printf(" %-4s %-6s %4d\n", "A", "UNIX", @fd2[tid]);
+            printf("%s %s %d", "A", "UNIX", @fd2[tid]);
         }
         if (@inet_family2[tid] == AF_INET) {
-            printf(" %-4s %-6s %4d\n", "A", "INET", @fd2[tid]);
+            printf("%s %s %d", "A", "INET", @fd2[tid]);
         }
         if (@inet_family2[tid] == AF_INET6) {
-            printf(" %-4s %-6s %4d\n", "A", "INET6", @fd2[tid]);
+            printf("%s %s %d", "A", "INET6", @fd2[tid]);
         }
     }
     delete(@fd2[tid]);
