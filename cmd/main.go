@@ -70,13 +70,11 @@ func main() {
 	var bpfCommands []taskExecution.ExecUnit
 	bpfCommands = append(bpfCommands, *lsof)
 	for _, i := range bpfScriptFiles {
-		bpfCommands = append(
-			bpfCommands,
-			taskExecution.NewExecUnitContinuous(
-				programConfig.BpftraceBinPath,
-				i.Name(),
-				uint(programConfig.ProgramTime/programConfig.ScriptTime),
-				time.Duration(programConfig.ScriptTime)*time.Second))
+		bpf := taskExecution.NewExecUnitContinuous(programConfig.BpftraceBinPath,
+			i.Name(),
+			uint(programConfig.ProgramTime/programConfig.ScriptTime),
+			time.Duration(programConfig.ScriptTime)*time.Second)
+		bpfCommands = append(bpfCommands, *bpf)
 	}
 
 	err = taskExecution.StartTasks(pathToTmp, bpfCommands...)
