@@ -13,8 +13,8 @@ type Interaction interface {
 }
 
 type ParsingData struct {
-	PathOfExecutableFile1, PathOfExecutableFile2 string
-	WayOfInteraction                             Interaction
+	PathsOfExecutableFiles [2]string
+	WayOfInteraction       Interaction
 }
 
 //----------------------------------------------------------------
@@ -78,7 +78,7 @@ func findConnection(rwArr []readWriteData) []ParsingData {
 				} else if rwArr[j].readBytes != "0" && rwArr[j].writtenBytes == "0" {
 					rwInfo.ReadBytes, rwInfo.WrittenBytes = rwArr[j].readBytes, rwArr[i].writtenBytes
 				}
-				parsingArr = append(parsingArr, ParsingData{rwArr[i].pathOfExecutableFile, rwArr[j].pathOfExecutableFile, rwInfo})
+				parsingArr = append(parsingArr, ParsingData{[2]string{rwArr[i].pathOfExecutableFile, rwArr[j].pathOfExecutableFile}, rwInfo})
 			}
 		}
 	}
