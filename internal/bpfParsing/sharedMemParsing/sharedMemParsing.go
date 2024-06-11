@@ -13,8 +13,8 @@ type Interaction interface {
 }
 
 type ParsingData struct {
-	PathOfExecutableFile1, PathOfExecutableFile2 string
-	WayOfInteraction                             Interaction
+	PathsOfExecutableFiles [2]string
+	WayOfInteraction       Interaction
 }
 
 //----------------------------------------------------------------
@@ -41,7 +41,7 @@ func Parse(fileName string) ([]ParsingData, error) {
 
 	for fileScanner.Scan() {
 		arr := strings.Fields(fileScanner.Text())
-		if len(arr) == 4 { // sections of the posix are not being taken into account now!
+		if len(arr) == 4 { // sections of posix are not being taken into account now!
 			mem := sharedMemData{pathOfExecutableFile: arr[0], key: arr[1], id: arr[2], typeIpc: arr[3]}
 			if !contains(memArr, mem) {
 				memArr = append(memArr, mem)
@@ -69,7 +69,7 @@ func findConnection(memArr []sharedMemData) []ParsingData {
 			if memArr[i].id == memArr[j].id &&
 				memArr[i].pathOfExecutableFile != memArr[j].pathOfExecutableFile {
 				memInfo := SharedMemInfo{Ipc: "by shared memory", Id: memArr[i].id, Key: memArr[i].key, Type: memArr[i].typeIpc}
-				parsingArr = append(parsingArr, ParsingData{memArr[i].pathOfExecutableFile, memArr[j].pathOfExecutableFile, memInfo})
+				parsingArr = append(parsingArr, ParsingData{[2]string{memArr[i].pathOfExecutableFile, memArr[j].pathOfExecutableFile}, memInfo})
 			}
 		}
 	}
