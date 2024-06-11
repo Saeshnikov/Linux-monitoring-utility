@@ -13,8 +13,8 @@ type Interaction interface {
 }
 
 type ParsingData struct {
-	PathOfExecutableFile1, PathOfExecutableFile2 string
-	WayOfInteraction                             Interaction
+	PathsOfExecutableFiles [2]string
+	WayOfInteraction       Interaction
 }
 
 //----------------------------------------------------------------
@@ -70,9 +70,10 @@ func findConnection(pipeArr []namedPipesData) []ParsingData {
 				pipeArr[i].fileDescriptor == pipeArr[j].fileDescriptor &&
 				pipeArr[i].pathOfExecutableFile != pipeArr[j].pathOfExecutableFile {
 				pipeInfo := NamedPipesInfo{Ipc: "by named pipes", FileDescriptor: pipeArr[i].fileDescriptor, Name: pipeArr[i].name}
-				parsingArr = append(parsingArr, ParsingData{pipeArr[i].pathOfExecutableFile, pipeArr[j].pathOfExecutableFile, pipeInfo})
+				parsingArr = append(parsingArr, ParsingData{[2]string{pipeArr[i].pathOfExecutableFile, pipeArr[j].pathOfExecutableFile}, pipeInfo})
 			}
 		}
 	}
 	return parsingArr
 }
+
