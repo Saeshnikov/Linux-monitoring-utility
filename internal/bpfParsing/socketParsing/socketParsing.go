@@ -13,8 +13,8 @@ type Interaction interface {
 }
 
 type ParsingData struct {
-	PathOfExecutableFile1, PathOfExecutableFile2 string
-	WayOfInteraction                             Interaction
+	PathsOfExecutableFiles [2]string
+	WayOfInteraction       Interaction
 }
 //----------------------------------------------------------------
 
@@ -69,7 +69,7 @@ func findConnection(sockArr []socketData) []ParsingData {
 				sockArr[i].syscallType != sockArr[j].syscallType &&
 				sockArr[i].protocol == sockArr[j].protocol {
 				sockInfo := SocketInfo{Ipc: "by socket", Protocol: sockArr[i].protocol, FileDescriptor: sockArr[i].fileDescriptor}
-				parsingArr = append(parsingArr, ParsingData{sockArr[i].pathOfExecutableFile, sockArr[j].pathOfExecutableFile, sockInfo})
+				parsingArr = append(parsingArr, ParsingData{[2]string{sockArr[i].pathOfExecutableFile, sockArr[j].pathOfExecutableFile}, sockInfo})
 			}
 		}
 	}
