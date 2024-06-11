@@ -1,12 +1,36 @@
-Syscalls:
-  - execve
-  - execveat
-  - open
-  - openat
-  - openat2
-  - open_tree
-  - statx
-  - fspick
-  - open_by_handle_at
-  - readlink
-  - readlinkat
+socket:
+  sockSyscall:
+    - accept
+    - connect
+  protocol:                
+    - UNIX
+    - INET
+    - INET6
+namedpipe:     
+  openSyscall:          
+    - execve
+    - execveat
+    - open
+    - openat
+    - openat2
+    - open_tree
+    - statx
+    - fspick
+    - open_by_handle_at
+fsorw:                
+  openSyscall:          
+    - execve
+    - execveat
+    - open
+    - openat
+    - openat2
+    - open_tree
+    - statx
+    - fspick
+    - open_by_handle_at            
+    - readlink
+    - readlinkat
+  fsorwSyscall:         
+    - read
+    - write
+semaphore:
