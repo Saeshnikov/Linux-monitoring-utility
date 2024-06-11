@@ -13,8 +13,8 @@ type Interaction interface {
 }
 
 type ParsingData struct {
-	PathOfExecutableFile1, PathOfExecutableFile2 string
-	WayOfInteraction                             Interaction
+	PathsOfExecutableFiles [2]string
+	WayOfInteraction       Interaction
 }
 //----------------------------------------------------------------
 
@@ -68,7 +68,7 @@ func findConnection(semArr []semaphoreData) []ParsingData {
 			if semArr[i].id == semArr[j].id &&
 				semArr[i].pathOfExecutableFile != semArr[j].pathOfExecutableFile {
 				semInfo := SemaphoreInfo{Ipc: "by semaphore", Id: semArr[i].id}
-				parsingArr = append(parsingArr, ParsingData{semArr[i].pathOfExecutableFile, semArr[j].pathOfExecutableFile, semInfo})
+				parsingArr = append(parsingArr, ParsingData{[2]string{semArr[i].pathOfExecutableFile, semArr[j].pathOfExecutableFile}, semInfo})
 			}
 		}
 	}
