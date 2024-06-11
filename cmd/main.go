@@ -12,9 +12,8 @@ import (
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strconv"
+	"strings"
 	"time"
 )
 
@@ -61,7 +60,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = taskExecution.StartTasks(programConfig.ProgramTime, programConfig.ScriptTime, bpfScriptFile.Name(), toRun, toRunLsof)
+	lsof := taskExecution.NewExecUnitOneShot("/usr/bin/lsof", "", 1)
+	bpf := taskExecution.NewExecUnitContinuous(programConfig.BpftraceBinPath, bpfScriptFile.Name(), uint(programConfig.ProgramTime/programConfig.ScriptTime), time.Duration(programConfig.ScriptTime)*time.Second)
+
+	err = taskExecution.StartTasks(pathToTmp, *lsof, *bpf)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,52 +77,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func toRunLsof() {
-	arr, err := lsofLayer.LsofExec()
-	if err != nil {
-		log.Fatal(err)
-	}
-	file, err := os.Create(pathToTmp + "/tmp/" + "lsofOutput")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, line := range arr {
-		file.WriteString(line + "\n")
-	}
-}
-
-func toRun(fileName string, c chan *exec.Cmd) {
-
-	file, err := os.Create(pathToTmp + "/tmp/" + strconv.FormatInt(time.Now().Unix(), 10))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	cmd := exec.Command(programConfig.BpftraceBinPath, fileName)
-	pipe, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	reader := bufio.NewReader(pipe)
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Procces is running as pid %d\n", cmd.Process.Pid)
-	line, err := reader.ReadString('\n')
-
-	c <- cmd
-
-	for err == nil {
-		file.WriteString(line)
-		line, err = reader.ReadString('\n')
-	}
-
-	cmd.Wait()
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
@@ -152,7 +108,7 @@ func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) err
 	}
 	for _, file := range files {
 		if !file.IsDir() {
-			if file.Name() == "lsofOutput" {
+			if strings.Split(file.Name(), ".")[0] == "lsof" {
 				var res []string
 				filePath := filepath.Join(directory, file.Name())
 				f, err := os.Open(filePath)
@@ -161,10 +117,8 @@ func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) err
 				}
 				defer f.Close()
 				scanner := bufio.NewScanner(f)
-				for scanner.Scan() {
-					line := scanner.Text()
-					res = append(res, line)
-				}
+				res, err = lsofLayer.LsofParsing(scanner)
+
 				fmt.Print("File with name: ", file.Name(), " to analyse... ")
 				rpmLayer.RPMlayer(res, dirPath, outputMap)
 				fmt.Print(" DONE\n")
