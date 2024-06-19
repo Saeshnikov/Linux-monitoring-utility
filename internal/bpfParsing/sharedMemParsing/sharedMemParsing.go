@@ -68,7 +68,7 @@ func findConnection(memArr []sharedMemData) []ParsingData {
 		for j := i + 1; j < len(memArr); j++ {
 			if memArr[i].id == memArr[j].id &&
 				memArr[i].pathOfExecutableFile != memArr[j].pathOfExecutableFile {
-				memInfo := SharedMemInfo{Ipc: "by shared memory", Id: memArr[i].id, Key: memArr[i].key, Type: memArr[i].typeIpc}
+				memInfo := SharedMemInfo{Ipc: "sharedMemory", Id: memArr[i].id, Key: memArr[i].key, Type: memArr[i].typeIpc}
 				parsingArr = append(parsingArr, ParsingData{[2]string{memArr[i].pathOfExecutableFile, memArr[j].pathOfExecutableFile}, memInfo})
 			}
 		}
