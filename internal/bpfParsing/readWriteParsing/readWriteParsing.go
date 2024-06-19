@@ -71,7 +71,7 @@ func findConnection(rwArr []readWriteData) []ParsingData {
 				rwArr[i].pathOfExecutableFile != rwArr[j].pathOfExecutableFile &&
 				rwArr[i].pathOfOpenedFile == rwArr[j].pathOfOpenedFile &&
 				rwArr[i].readBytes != rwArr[j].readBytes { //!!
-				rwInfo := ReadWriteInfo{Ipc: "by reading/writing", PathOfOpenedFile: rwArr[i].pathOfOpenedFile,
+				rwInfo := ReadWriteInfo{Ipc: "readingWriting", PathOfOpenedFile: rwArr[i].pathOfOpenedFile,
 					FileDescriptor: rwArr[i].fileDescriptor}
 				if rwArr[i].readBytes != "0" && rwArr[i].writtenBytes == "0" {
 					rwInfo.ReadBytes, rwInfo.WrittenBytes = rwArr[i].readBytes, rwArr[j].writtenBytes
