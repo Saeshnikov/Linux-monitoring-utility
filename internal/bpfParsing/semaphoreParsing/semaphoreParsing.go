@@ -67,7 +67,7 @@ func findConnection(semArr []semaphoreData) []ParsingData {
 		for j := i + 1; j < len(semArr); j++ {
 			if semArr[i].id == semArr[j].id &&
 				semArr[i].pathOfExecutableFile != semArr[j].pathOfExecutableFile {
-				semInfo := SemaphoreInfo{Ipc: "by semaphore", Id: semArr[i].id}
+				semInfo := SemaphoreInfo{Ipc: "semaphore", Id: semArr[i].id}
 				parsingArr = append(parsingArr, ParsingData{[2]string{semArr[i].pathOfExecutableFile, semArr[j].pathOfExecutableFile}, semInfo})
 			}
 		}
