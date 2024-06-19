@@ -69,7 +69,7 @@ func findConnection(pipeArr []namedPipesData) []ParsingData {
 			if pipeArr[i].name == pipeArr[j].name &&
 				pipeArr[i].fileDescriptor == pipeArr[j].fileDescriptor &&
 				pipeArr[i].pathOfExecutableFile != pipeArr[j].pathOfExecutableFile {
-				pipeInfo := NamedPipesInfo{Ipc: "by named pipes", FileDescriptor: pipeArr[i].fileDescriptor, Name: pipeArr[i].name}
+				pipeInfo := NamedPipesInfo{Ipc: "namedPipes", FileDescriptor: pipeArr[i].fileDescriptor, Name: pipeArr[i].name}
 				parsingArr = append(parsingArr, ParsingData{[2]string{pipeArr[i].pathOfExecutableFile, pipeArr[j].pathOfExecutableFile}, pipeInfo})
 			}
 		}
