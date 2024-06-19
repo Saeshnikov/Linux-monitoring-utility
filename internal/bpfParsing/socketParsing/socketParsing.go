@@ -68,7 +68,7 @@ func findConnection(sockArr []socketData) []ParsingData {
 			if sockArr[i].fileDescriptor == sockArr[j].fileDescriptor &&
 				sockArr[i].syscallType != sockArr[j].syscallType &&
 				sockArr[i].protocol == sockArr[j].protocol {
-				sockInfo := SocketInfo{Ipc: "by socket", Protocol: sockArr[i].protocol, FileDescriptor: sockArr[i].fileDescriptor}
+				sockInfo := SocketInfo{Ipc: "socket", Protocol: sockArr[i].protocol, FileDescriptor: sockArr[i].fileDescriptor}
 				parsingArr = append(parsingArr, ParsingData{[2]string{sockArr[i].pathOfExecutableFile, sockArr[j].pathOfExecutableFile}, sockInfo})
 			}
 		}
