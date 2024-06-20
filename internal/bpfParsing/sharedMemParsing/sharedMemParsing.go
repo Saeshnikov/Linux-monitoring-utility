@@ -41,7 +41,7 @@ func Parse(fileName string) ([]ParsingData, error) {
 
 	for fileScanner.Scan() {
 		arr := strings.Fields(fileScanner.Text())
-		if len(arr) == 4 { // sections of posix are not being taken into account now!
+		if len(arr) == 4 {
 			mem := sharedMemData{pathOfExecutableFile: arr[0], key: arr[1], id: arr[2], typeIpc: arr[3]}
 			if !contains(memArr, mem) {
 				memArr = append(memArr, mem)
