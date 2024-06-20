@@ -43,7 +43,7 @@ const (
 )
 
 func (syscall socket_Syscall) String() string {
-	return [...]string{"conncet", "accept"}[syscall-1]
+	return [...]string{"connect", "accept"}[syscall-1]
 }
 
 func (protocol socket_Protocol) String() string {

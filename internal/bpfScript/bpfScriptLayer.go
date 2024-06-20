@@ -1,12 +1,12 @@
 package bpfScriptLayer
 
 import (
-	sock "monitoring-utility/bpfScript/socketScript"
-	sem "monitoring-utility/bpfScript/semScript"
-	pipe "monitoring-utility/bpfScript/namedPipeScript"
-	fs "monitoring-utility/bpfScript/fsorwScript"
 	"errors"
 	"fmt"
+	fs "linux-monitoring-utility/internal/bpfScript/fsorwScript"
+	pipe "linux-monitoring-utility/internal/bpfScript/namedPipeScript"
+	sem "linux-monitoring-utility/internal/bpfScript/semScript"
+	sock "linux-monitoring-utility/internal/bpfScript/socketScript"
 	"os"
 )
 
@@ -36,10 +36,10 @@ func isValidIpc(ipc string) bool {
 	return false
 }
 
-func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode int) ([] *os.File, error) {
+func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode int) ([]*os.File, error) {
 	rootInode := inode
 
-	var returnFilesArr [] *os.File
+	var returnFilesArr []*os.File
 
 	for ipcType, option := range ipc {
 		if isValidIpc(ipcType) {

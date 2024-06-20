@@ -17,13 +17,13 @@ func TestConfig(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	var bpfCfg config.BpftraceConfig
+	var bpfCfg config.BpfTraceConfig
 	err = yaml.Unmarshal(yamlFile, &bpfCfg)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	_, err = bpfScript.GenerateBpfScript(bpfCfg.Syscalls, "")
+	_, err = bpfScript.GenerateBpfScript(bpfCfg, "", 2)
 	if err == nil {
 		t.Fatal("BpfScriptLayer accepted invalid config file.")
 	}

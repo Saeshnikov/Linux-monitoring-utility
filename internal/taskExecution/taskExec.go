@@ -17,7 +17,7 @@ var processes []*exec.Cmd
 var hotExit chan bool
 var mutex sync.RWMutex
 
-func StartTasks(outDirPath string, toExec ...execUnit) error {
+func StartTasks(outDirPath string, toExec ...ExecUnit) error {
 	var wg sync.WaitGroup
 	processes = make([]*exec.Cmd, len(toExec))
 	//function that writing programs output to {outDirPath}/tmp/{binary_filename.timestamp}

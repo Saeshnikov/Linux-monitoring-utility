@@ -2,7 +2,7 @@ package taskExecution
 
 import "time"
 
-type execUnit interface {
+type ExecUnit interface {
 	getBinPath() string
 	getArgs() string
 	getExecCount() uint

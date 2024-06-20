@@ -8,9 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type BpftraceConfig struct {
-	Syscalls []string `yaml:"Syscalls"`
-}
+type BpfTraceConfig map[string]map[string][]string
 
 type ConfigFile struct {
 	ScriptTime            uint     `yaml:"scriptTime"`
@@ -73,7 +71,7 @@ func configValidate(configStruct *ConfigFile) error {
 	return nil
 }
 
-func ConfigRead(configStruct *ConfigFile) ([]string, error) {
+func ConfigRead(configStruct *ConfigFile) (map[string]map[string][]string, error) {
 
 	var cliConf ConfigFile
 	var configFileName string
@@ -132,19 +130,19 @@ func ConfigRead(configStruct *ConfigFile) ([]string, error) {
 	}
 
 	//Reading syscalls yaml file
-	var config BpftraceConfig
-
 	bpftraceYamlFile, err := os.ReadFile(configStruct.SyscallsFileName)
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(bpftraceYamlFile, &config)
+	var bpftraceConfig BpfTraceConfig
+
+	err = yaml.Unmarshal(bpftraceYamlFile, &bpftraceConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return config.Syscalls, nil
+	return bpftraceConfig, nil
 }
 
 func configFileRead(configFileName string, configStruct *ConfigFile) error {
