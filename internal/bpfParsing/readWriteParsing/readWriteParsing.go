@@ -50,7 +50,7 @@ func Parse(fileName string) ([]ParsingData, error) {
 		}
 	}
 
-	parsingArr := findConnection(rwArr)
+	parsingArr := packData(rwArr)
 	return parsingArr, nil
 }
 
@@ -63,24 +63,20 @@ func contains(rwArr []readWriteData, rw readWriteData) bool {
 	return false
 }
 
-func findConnection(rwArr []readWriteData) []ParsingData {
+func packData(rwArr []readWriteData) []ParsingData {
 	var parsingArr []ParsingData
 	for i := 0; i < len(rwArr); i++ {
-		for j := i + 1; j < len(rwArr); j++ {
-			if rwArr[i].fileDescriptor == rwArr[j].fileDescriptor &&
-				rwArr[i].pathOfExecutableFile != rwArr[j].pathOfExecutableFile &&
-				rwArr[i].pathOfOpenedFile == rwArr[j].pathOfOpenedFile &&
-				rwArr[i].readBytes != rwArr[j].readBytes { //!!
-				rwInfo := ReadWriteInfo{Ipc: "readingWriting", PathOfOpenedFile: rwArr[i].pathOfOpenedFile,
-					FileDescriptor: rwArr[i].fileDescriptor}
-				if rwArr[i].readBytes != "0" && rwArr[i].writtenBytes == "0" {
-					rwInfo.ReadBytes, rwInfo.WrittenBytes = rwArr[i].readBytes, rwArr[j].writtenBytes
-				} else if rwArr[j].readBytes != "0" && rwArr[j].writtenBytes == "0" {
-					rwInfo.ReadBytes, rwInfo.WrittenBytes = rwArr[j].readBytes, rwArr[i].writtenBytes
-				}
-				parsingArr = append(parsingArr, ParsingData{[2]string{rwArr[i].pathOfExecutableFile, rwArr[j].pathOfExecutableFile}, rwInfo})
-			}
+		rwInfo := ReadWriteInfo{PathOfOpenedFile: rwArr[i].pathOfOpenedFile,
+			FileDescriptor: rwArr[i].fileDescriptor, ReadBytes: rwArr[i].readBytes, WrittenBytes: rwArr[i].writtenBytes}
+		if rwArr[i].readBytes != "0" && rwArr[i].writtenBytes == "0" {
+			rwInfo.Ipc = "reading"
+			rwInfo.ReadBytes, rwInfo.WrittenBytes = rwArr[i].readBytes, "-"
+		} else if rwArr[i].readBytes == "0" && rwArr[i].writtenBytes != "0" {
+			rwInfo.Ipc = "writing"
+			rwInfo.ReadBytes, rwInfo.WrittenBytes = "-", rwArr[i].writtenBytes
 		}
+		rwArr[i].pathOfExecutableFile = strings.TrimPrefix(rwArr[i].pathOfExecutableFile, "/snapshot")
+		parsingArr = append(parsingArr, ParsingData{[2]string{rwArr[i].pathOfExecutableFile, "-"}, rwInfo})
 	}
 	return parsingArr
 }
