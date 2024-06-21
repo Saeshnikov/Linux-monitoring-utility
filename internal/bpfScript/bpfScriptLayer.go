@@ -1,12 +1,13 @@
 package bpfScriptLayer
 
 import (
+	sock "monitoring-utility/bpfScript/socketScript"
+	sem "monitoring-utility/bpfScript/semScript"
+	pipe "monitoring-utility/bpfScript/namedPipeScript"
+	fs "monitoring-utility/bpfScript/fsorwScript"
+	shm "monitoring-utility/bpfScript/shmScript"
 	"errors"
 	"fmt"
-	fs "linux-monitoring-utility/internal/bpfScript/fsorwScript"
-	pipe "linux-monitoring-utility/internal/bpfScript/namedPipeScript"
-	sem "linux-monitoring-utility/internal/bpfScript/semScript"
-	sock "linux-monitoring-utility/internal/bpfScript/socketScript"
 	"os"
 )
 
@@ -18,11 +19,12 @@ const (
 	Socket
 	NamedPipe
 	Semaphore
+	SharedMem
 	EndIpc
 )
 
 func (ipc IPC) String() string {
-	return [...]string{"start", "fsorw", "socket", "namedpipe", "semaphore", "end"}[ipc-1]
+	return [...]string{"start", "fsorw", "socket", "namedpipe", "semaphore", "sharedMem", "end"}[ipc-1]
 }
 
 func isValidIpc(ipc string) bool {
@@ -120,6 +122,26 @@ func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode
 				defer file.Close()
 
 				err = sem.MakeSemaphoreScript(file, option, rootInode)
+				if err != nil {
+					return nil, err
+				}
+				returnFilesArr = append(returnFilesArr, file)
+			case SharedMem.String():
+				path, err := checkDir(dirPath, ipcType)
+				if err != nil {
+					return nil, err
+				}
+				err = createFile(path)
+				if err != nil {
+					return nil, err
+				}
+				file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
+				if err != nil {
+					return nil, err
+				}
+				defer file.Close()
+
+				err = shm.MakeSharedMemScript(file, option, rootInode)
 				if err != nil {
 					return nil, err
 				}
