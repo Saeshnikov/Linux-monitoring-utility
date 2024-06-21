@@ -12,7 +12,9 @@ import (
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -36,7 +38,10 @@ func main() {
 	lsofLayer.DirToIgnore = programConfig.DirToIgnore
 	bpfParsing.DirToIgnore = programConfig.DirToIgnore
 	rpmLayer.RpmBinPath = programConfig.RpmBinPath
-	bpfScriptFile, err := bpfScript.GenerateBpfScript(syscalls, programConfig.OutputPath)
+	inodeStr, err := exec.Command("ls /", "-id").Output()
+	inodeInt, err := strconv.Atoi(string(inodeStr))
+
+	bpfScriptFiles, err := bpfScript.GenerateBpfScript(syscalls, programConfig.OutputPath, inodeInt)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,9 +66,18 @@ func main() {
 	}
 
 	lsof := taskExecution.NewExecUnitOneShot("/usr/bin/lsof", "", 1)
-	bpf := taskExecution.NewExecUnitContinuous(programConfig.BpftraceBinPath, bpfScriptFile.Name(), uint(programConfig.ProgramTime/programConfig.ScriptTime), time.Duration(programConfig.ScriptTime)*time.Second)
 
-	err = taskExecution.StartTasks(pathToTmp, *lsof, *bpf)
+	var bpfCommands []taskExecution.ExecUnit
+	bpfCommands = append(bpfCommands, *lsof)
+	for _, i := range bpfScriptFiles {
+		bpf := taskExecution.NewExecUnitContinuous(programConfig.BpftraceBinPath,
+			i.Name(),
+			uint(programConfig.ProgramTime/programConfig.ScriptTime),
+			time.Duration(programConfig.ScriptTime)*time.Second)
+		bpfCommands = append(bpfCommands, *bpf)
+	}
+
+	err = taskExecution.StartTasks(pathToTmp, bpfCommands...)
 	if err != nil {
 		log.Fatal(err)
 	}
