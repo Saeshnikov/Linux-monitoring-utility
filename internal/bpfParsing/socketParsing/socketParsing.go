@@ -19,11 +19,11 @@ type ParsingData struct {
 //----------------------------------------------------------------
 
 type SocketInfo struct {
-	Ipc, Protocol, FileDescriptor string
+	Ipc, Protocol string
 }
 
 func (s SocketInfo) String() string {
-	return fmt.Sprintf("%s: %s, %s", s.Ipc, s.Protocol, s.FileDescriptor)
+	return fmt.Sprintf("%s: %s", s.Ipc, s.Protocol)
 }
 
 type socketData struct {
@@ -68,7 +68,7 @@ func findConnection(sockArr []socketData) []ParsingData {
 			if sockArr[i].fileDescriptor == sockArr[j].fileDescriptor &&
 				sockArr[i].syscallType != sockArr[j].syscallType &&
 				sockArr[i].protocol == sockArr[j].protocol {
-				sockInfo := SocketInfo{Ipc: "socket", Protocol: sockArr[i].protocol, FileDescriptor: sockArr[i].fileDescriptor}
+				sockInfo := SocketInfo{Ipc: "socket", Protocol: sockArr[i].protocol}
 				parsingArr = append(parsingArr, ParsingData{[2]string{sockArr[i].pathOfExecutableFile, sockArr[j].pathOfExecutableFile}, sockInfo})
 			}
 		}
