@@ -20,11 +20,11 @@ type ParsingData struct {
 //----------------------------------------------------------------
 
 type ReadWriteInfo struct {
-	Ipc, FileDescriptor, PathOfOpenedFile, ReadBytes, WrittenBytes string
+	Ipc, PathOfOpenedFile, ReadBytes, WrittenBytes string
 }
 
 func (rw ReadWriteInfo) String() string {
-	return fmt.Sprintf("%s: %s, %s, %s, %s", rw.Ipc, rw.FileDescriptor, rw.PathOfOpenedFile, rw.ReadBytes, rw.WrittenBytes)
+	return fmt.Sprintf("%s: %s, %s, %s", rw.Ipc, rw.PathOfOpenedFile, rw.ReadBytes, rw.WrittenBytes)
 }
 
 type readWriteData struct {
@@ -67,7 +67,7 @@ func packData(rwArr []readWriteData) []ParsingData {
 	var parsingArr []ParsingData
 	for i := 0; i < len(rwArr); i++ {
 		rwInfo := ReadWriteInfo{PathOfOpenedFile: rwArr[i].pathOfOpenedFile,
-			FileDescriptor: rwArr[i].fileDescriptor, ReadBytes: rwArr[i].readBytes, WrittenBytes: rwArr[i].writtenBytes}
+			ReadBytes: rwArr[i].readBytes, WrittenBytes: rwArr[i].writtenBytes}
 		if rwArr[i].readBytes != "0" && rwArr[i].writtenBytes == "0" {
 			rwInfo.Ipc = "reading"
 			rwInfo.ReadBytes, rwInfo.WrittenBytes = rwArr[i].readBytes, "-"
