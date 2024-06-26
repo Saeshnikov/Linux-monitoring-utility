@@ -1,6 +1,7 @@
 package semScript
 
 import (
+	genStruct "linux-monitoring-utility/internal/bpfScript/generalStructIPC"
 	"errors"
 	"os"
 	"strconv"
@@ -16,7 +17,7 @@ var (
 	}
 )
 
-func MakeSemaphoreScript(file *os.File, option map[string][]string, rootInode int) error {
+func MakeSemaphoreScript(file *os.File, option []genStruct.OptionStruct, rootInode int) error {
 	immutablePieces["partFullPath"] = "$task = (struct task_struct *)curtask;\n\t$part_path = $task->mm->exe_file->f_path.dentry->d_parent;\n\t$i = 0;\n\t@full_path_comm[$i] = $part_path->d_name.name;\n\t$i = 1;\n\twhile ($i != 3000) {\n\t\t$part_path = $part_path->d_parent;\n\t\t@full_path_comm[$i] = $part_path->d_name.name;\n\t\tif ((uint64)$part_path->d_inode->i_ino == " + strconv.Itoa(rootInode) + ") {\n\t\t\tbreak;\n\t\t}\n\t\t$i = $i + 1;\n\t}\n\tprintf(" + `"\n/"` + ");\n\twhile ($i != -1) {\n\t\t$str_ = @full_path_comm[$i];\n\t\tprintf(" + `"%` + `s/"` + ", str($str_));\n\t\t$i = $i - 1;\n\t}\n\tprintf(" + `"%` + `s "` + ",comm);\n\n\t"
 
 	if len(option) == 0 {

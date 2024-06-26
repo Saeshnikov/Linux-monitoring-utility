@@ -1,6 +1,7 @@
 package namedPipeScript
 
 import (
+	genStruct "linux-monitoring-utility/internal/bpfScript/generalStructIPC"
 	"errors"
 	"os"
 	"strconv"
@@ -60,7 +61,7 @@ func isValidOpenCom(commad string) bool {
 	return false
 }
 
-func MakeNamedPipeScript(file *os.File, option map[string][]string, rootInode int) error {
+func MakeNamedPipeScript(file *os.File, option []genStruct.OptionStruct, rootInode int) error {
 	immutablePieces["partFullPath"] = "$task = (struct task_struct *)curtask;\n\t$part_path = $task->mm->exe_file->f_path.dentry->d_parent;\n\t$i = 0;\n\t@full_path_comm[$i] = $part_path->d_name.name;\n\t$i = 1;\n\twhile ($i != 3000) {\n\t\t$part_path = $part_path->d_parent;\n\t\t@full_path_comm[$i] = $part_path->d_name.name;\n\t\tif ((uint64)$part_path->d_inode->i_ino == " + strconv.Itoa(rootInode) + ") {\n\t\t\tbreak;\n\t\t}\n\t\t$i = $i + 1;\n\t}\n\tprintf(" + `"\n/"` + ");\n\twhile ($i != -1) {\n\t\t$str_ = @full_path_comm[$i];\n\t\tprintf(" + `"%` + `s/"` + ", str($str_));\n\t\t$i = $i - 1;\n\t}\n\tprintf(" + `"%` + `s "` + ",comm);\n\n\t"
 
 	file.WriteString(immutablePieces["pipeHeader"])
@@ -80,10 +81,10 @@ func MakeNamedPipeScript(file *os.File, option map[string][]string, rootInode in
 			}
 		}
 	} else {
-		for typeOpt, opt := range option {
-			switch typeOpt {
+		for _, opt := range option {
+			switch opt.OptionType {
 			case "openSyscall":
-				for _, value := range opt {
+				for _, value := range opt.Options {
 					if isValidOpenCom(value) {
 						switch value {
 						case Readlink.String(), Readlinkat.String():
