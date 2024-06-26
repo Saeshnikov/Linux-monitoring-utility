@@ -20,11 +20,11 @@ type ParsingData struct {
 //----------------------------------------------------------------
 
 type NamedPipesInfo struct {
-	Ipc, FileDescriptor, Name string
+	Ipc, Name string
 }
 
 func (s NamedPipesInfo) String() string {
-	return fmt.Sprintf("%s: %s, %s", s.Ipc, s.FileDescriptor, s.Name)
+	return fmt.Sprintf("%s: %s", s.Ipc, s.Name)
 }
 
 type namedPipesData struct {
@@ -69,7 +69,7 @@ func findConnection(pipeArr []namedPipesData) []ParsingData {
 			if pipeArr[i].name == pipeArr[j].name &&
 				pipeArr[i].fileDescriptor == pipeArr[j].fileDescriptor &&
 				pipeArr[i].pathOfExecutableFile != pipeArr[j].pathOfExecutableFile {
-				pipeInfo := NamedPipesInfo{Ipc: "namedPipes", FileDescriptor: pipeArr[i].fileDescriptor, Name: pipeArr[i].name}
+				pipeInfo := NamedPipesInfo{Ipc: "namedPipes", Name: pipeArr[i].name}
 				parsingArr = append(parsingArr, ParsingData{[2]string{pipeArr[i].pathOfExecutableFile, pipeArr[j].pathOfExecutableFile}, pipeInfo})
 			}
 		}
