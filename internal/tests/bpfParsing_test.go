@@ -2,7 +2,7 @@ package tests
 
 import (
 	"bufio"
-	"linux-monitoring-utility/internal/bpfParsing"
+	bpfParsing "linux-monitoring-utility/internal/bpfParsing/bpftraceParsing"
 	"os"
 	"reflect"
 	"testing"
