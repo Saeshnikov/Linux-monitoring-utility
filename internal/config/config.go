@@ -1,6 +1,7 @@
 package config
 
 import (
+	genStruct "linux-monitoring-utility/internal/bpfScript/generalStructIPC"
 	"errors"
 	"flag"
 	"os"
@@ -71,7 +72,7 @@ func configValidate(configStruct *ConfigFile) error {
 	return nil
 }
 
-func ConfigRead(configStruct *ConfigFile) (map[string]map[string][]string, error) {
+func ConfigRead(configStruct *ConfigFile) ([]genStruct.IpcStruct, error) {
 
 	var cliConf ConfigFile
 	var configFileName string
@@ -142,7 +143,22 @@ func ConfigRead(configStruct *ConfigFile) (map[string]map[string][]string, error
 		return nil, err
 	}
 
-	return bpftraceConfig, nil
+	//////////////////////////////////////////////////////////////
+	var bpfSyscalls []genStruct.IpcStruct
+	for typeIpc, opts := range bpftraceConfig {
+		var oneIpc genStruct.IpcStruct
+		oneIpc.IpcType = typeIpc
+		for typeOpt, opt := range opts {
+			var oneOpt genStruct.OptionStruct
+			oneOpt.OptionType = typeOpt
+			oneOpt.Options = append(oneOpt.Options, opt...)
+			oneIpc.Option = append(oneIpc.Option, oneOpt)
+		}
+		bpfSyscalls = append(bpfSyscalls, oneIpc)
+	}
+
+	return bpfSyscalls, nil
+	/////////////////////////////////////////////////////////////
 }
 
 func configFileRead(configFileName string, configStruct *ConfigFile) error {
