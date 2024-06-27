@@ -3,19 +3,11 @@ package semaphoreParsing
 import (
 	"bufio"
 	"fmt"
+	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
 	"os"
 	"strings"
 )
 
-// ---------------------------------------------------------------
-type Interaction interface {
-	String() string
-}
-
-type ParsingData struct {
-	PathsOfExecutableFiles [2]string
-	WayOfInteraction       Interaction
-}
 //----------------------------------------------------------------
 
 type SemaphoreInfo struct {
@@ -30,7 +22,7 @@ type semaphoreData struct {
 	pathOfExecutableFile, key, id string
 }
 
-func Parse(fileName string) ([]ParsingData, error) {
+func Parse(fileName string) ([]parsingstruct.ParsingData, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -61,14 +53,14 @@ func contains(semArr []semaphoreData, sem semaphoreData) bool {
 	return false
 }
 
-func findConnection(semArr []semaphoreData) []ParsingData {
-	var parsingArr []ParsingData
+func findConnection(semArr []semaphoreData) []parsingstruct.ParsingData {
+	var parsingArr []parsingstruct.ParsingData
 	for i := 0; i < len(semArr); i++ {
 		for j := i + 1; j < len(semArr); j++ {
 			if semArr[i].id == semArr[j].id &&
 				semArr[i].pathOfExecutableFile != semArr[j].pathOfExecutableFile {
 				semInfo := SemaphoreInfo{Ipc: "semaphore", Id: semArr[i].id}
-				parsingArr = append(parsingArr, ParsingData{[2]string{semArr[i].pathOfExecutableFile, semArr[j].pathOfExecutableFile}, semInfo})
+				parsingArr = append(parsingArr, parsingstruct.ParsingData{PathsOfExecutableFiles: [2]string{semArr[i].pathOfExecutableFile, semArr[j].pathOfExecutableFile}, WayOfInteraction: semInfo})
 			}
 		}
 	}

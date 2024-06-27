@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
-	"fmt"
 	bpfParsing "linux-monitoring-utility/internal/bpfParsing/bpftraceParsing"
+	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
+	"linux-monitoring-utility/internal/bpfParsing/readWriteParsing"
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
 	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
@@ -13,9 +14,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -31,6 +30,7 @@ func main() {
 
 	os.Setenv("BPFTRACE_STRLEN", programConfig.BPFTRACE_STRLEN)
 	os.Setenv("BPFTRACE_MAP_KEYS_MAX", programConfig.BPFTRACE_MAP_KEYS_MAX)
+	os.Setenv("BPFTRACE_LOG_SIZE", strconv.Itoa(10000000))
 
 	lsofLayer.LsofBinPath = programConfig.LsofBinPath
 	lsofLayer.DirToIgnore = programConfig.DirToIgnore
@@ -64,38 +64,52 @@ func main() {
 		defer os.RemoveAll(pathToTmp + "/tmp")
 	}
 
-	outputMap, err := rpmLayer.FindAllPackages()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	lsof := taskExecution.NewExecUnitOneShotF("/usr/bin/lsof", "", 1, pathToTmp+"/tmp/lsof")
+	// outputMap, err := rpmLayer.FindAllPackages()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	var bpfCommands []taskExecution.ExecUnit
-	bpfCommands = append(bpfCommands, *lsof)
 	for _, i := range bpfScriptFiles {
 		dir := i.Name()[:len(i.Name())-3]
 		bpf := taskExecution.NewExecUnitContinuousF(programConfig.BpftraceBinPath,
-			i.Name(),
+			[]string{i.Name()},
 			uint(programConfig.ProgramTime/programConfig.ScriptTime),
 			time.Duration(programConfig.ScriptTime)*time.Second, pathToTmp+"/tmp/"+dir)
 		bpfCommands = append(bpfCommands, *bpf)
 	}
-	fmt.Println("a")
-	err = taskExecution.StartTasks(pathToTmp, bpfCommands...)
+	err = taskExecution.StartTasks(bpfCommands...)
+
+	// bpf := taskExecution.NewExecUnitContinuousF(programConfig.BpftraceBinPath,
+	// 	[]string{"sc.bt"},
+	// 	uint(programConfig.ProgramTime/programConfig.ScriptTime),
+	// 	time.Duration(programConfig.ScriptTime)*time.Second, pathToTmp+"/tmp/"+"fsorw")
+	// err = taskExecution.StartTasks(*bpf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = toAnalyse(pathToTmp+"/tmp/", programConfig.OutputPath, &outputMap)
+	parsedData, err := toParse(pathToTmp + "/tmp")
 	if err != nil {
 		log.Fatal(err)
 	}
+	// analysedData, err := toAnalyse(parsedData)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	err = exportToJson(programConfig.OutputPath, outputMap)
+	file, err := os.Create(strconv.FormatInt(time.Now().Unix(), 10))
 	if err != nil {
 		log.Fatal(err)
 	}
+	file.WriteString("PACKAGE1 PACKAGE2 INTERACTION")
+	for _, data := range parsedData {
+		file.WriteString(data.PathsOfExecutableFiles[0] + " , " + data.PathsOfExecutableFiles[1] + " : " + data.WayOfInteraction.String())
+	}
+	// err = exportToJson(programConfig.OutputPath, outputMap)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 }
 
 func exportToJson(filePath string, outputMap map[string]bool) error {
@@ -120,43 +134,87 @@ func exportToJson(filePath string, outputMap map[string]bool) error {
 	return nil
 }
 
-func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) error {
-	files, err := os.ReadDir(directory)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, file := range files {
-		if !file.IsDir() {
-			if strings.Split(file.Name(), ".")[0] == "lsof" {
-				var res []string
-				filePath := filepath.Join(directory, file.Name())
-				f, err := os.Open(filePath)
+func toParse(directory string) ([]parsingstruct.ParsingData, error) {
+	var parsingInfo []parsingstruct.ParsingData
+	files, err := os.ReadDir(directory + "/fsorw/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := readWriteParsing.Parse(directory + "/fsorw/" + file.Name())
 				if err != nil {
-					log.Fatal(err)
+					return nil, err
 				}
-				defer f.Close()
-				scanner := bufio.NewScanner(f)
-				res, err = lsofLayer.LsofParsing(scanner)
-				if err != nil {
-					return err
-				}
-
-				fmt.Print("File with name: ", file.Name(), " to analyse... ")
-				rpmLayer.RPMlayer(res, dirPath, outputMap)
-				fmt.Print(" DONE\n")
-
-			} else {
-				filePath := filepath.Join(directory, file.Name())
-				res, err := bpfParsing.Parse(filePath)
-				if err != nil {
-					log.Fatal(err)
-				}
-				fmt.Print("File with name: ", file.Name(), " to analyse... ")
-				rpmLayer.RPMlayer(res, dirPath, outputMap)
-				fmt.Print(" DONE\n")
+				parsingInfo = append(parsingInfo, data...)
 			}
 		}
-
 	}
-	return nil
+
+	files, err = os.ReadDir(directory + "/namedpipe/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := readWriteParsing.Parse(directory + "/namedpipe/" + file.Name())
+				if err != nil {
+					return nil, err
+				}
+				parsingInfo = append(parsingInfo, data...)
+			}
+		}
+	}
+
+	files, err = os.ReadDir(directory + "/semaphore/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := readWriteParsing.Parse(directory + "/semaphore/" + file.Name())
+				if err != nil {
+					return nil, err
+				}
+				parsingInfo = append(parsingInfo, data...)
+			}
+		}
+	}
+
+	files, err = os.ReadDir(directory + "/sharedMem/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := readWriteParsing.Parse(directory + "/sharedMem/" + file.Name())
+				if err != nil {
+					return nil, err
+				}
+				parsingInfo = append(parsingInfo, data...)
+			}
+		}
+	}
+
+	return parsingInfo, nil
+}
+
+func toAnalyse(data []parsingstruct.ParsingData) ([]parsingstruct.ParsingData, error) {
+	newParsingData := make([]parsingstruct.ParsingData, len(data))
+	for n, unit := range data {
+		var ch1 chan chan bytes.Buffer
+		var ch2 chan chan bytes.Buffer
+		tmp1 := taskExecution.NewExecUnitOneShotC(programConfig.RpmBinPath, []string{"-qf", unit.PathsOfExecutableFiles[0]}, 1, ch1)
+		tmp2 := taskExecution.NewExecUnitOneShotC(programConfig.RpmBinPath, []string{"-qf", unit.PathsOfExecutableFiles[1]}, 1, ch2)
+		go func(n int, i parsingstruct.Interaction) {
+			newParsingData[n].WayOfInteraction = i
+			newPaths := make([]string, 2)
+			c1 := <-ch1
+			c2 := <-ch2
+			select {
+			case b := <-c1:
+				newPaths[0] = b.String()
+			case b := <-c2:
+				newPaths[1] = b.String()
+			}
+			newParsingData[n].PathsOfExecutableFiles = [2]string(newPaths)
+		}(n, unit.WayOfInteraction)
+		err := taskExecution.StartTasks(tmp1, tmp2)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return newParsingData, nil
 }
