@@ -1,6 +1,9 @@
 package taskExecution
 
-import "time"
+import (
+	"bytes"
+	"time"
+)
 
 type ExecUnit interface {
 	getBinPath() string
@@ -8,38 +11,85 @@ type ExecUnit interface {
 	getExecCount() uint
 }
 
-type execUnitOneShot struct {
+// to channel
+type execUnitOneShotC struct {
 	binPath   string
 	args      string
 	execCount uint
+	ch        chan chan bytes.Buffer
 }
 
-type execUnitContinuous struct {
-	execUnitOneShot
+type execUnitContinuousC struct {
+	execUnitOneShotC
 	execTime time.Duration
 }
 
-func NewExecUnitContinuous(binPath string, args string, execCount uint, execTime time.Duration) *execUnitContinuous {
-	ExecUnitOneShot := execUnitOneShot{binPath: binPath, args: args, execCount: execCount}
-	return &execUnitContinuous{execUnitOneShot: ExecUnitOneShot, execTime: execTime}
+func NewExecUnitContinuousC(binPath string, args string, execCount uint, execTime time.Duration, ch chan chan bytes.Buffer) *execUnitContinuousC {
+	execUnitOneShotC := execUnitOneShotC{binPath: binPath, args: args, execCount: execCount, ch: ch}
+	return &execUnitContinuousC{execUnitOneShotC: execUnitOneShotC, execTime: execTime}
 }
 
-func NewExecUnitOneShot(binPath string, args string, execCount uint) *execUnitOneShot {
-	return &execUnitOneShot{binPath: binPath, args: args, execCount: execCount}
+func NewExecUnitOneShotC(binPath string, args string, execCount uint, ch chan chan bytes.Buffer) *execUnitOneShotC {
+	return &execUnitOneShotC{binPath: binPath, args: args, execCount: execCount, ch: ch}
 }
 
-func (t execUnitOneShot) getBinPath() string {
+func (t execUnitOneShotC) getBinPath() string {
 	return t.binPath
 }
 
-func (t execUnitOneShot) getArgs() string {
+func (t execUnitOneShotC) getArgs() string {
 	return t.args
 }
 
-func (t execUnitOneShot) getExecCount() uint {
+func (t execUnitOneShotC) getExecCount() uint {
 	return t.execCount
 }
 
-func (t execUnitContinuous) getExecTime() time.Duration {
+func (t execUnitOneShotC) getChan() chan chan bytes.Buffer {
+	return t.ch
+}
+
+func (t execUnitContinuousC) getExecTime() time.Duration {
+	return t.execTime
+}
+
+// to file
+type execUnitOneShotF struct {
+	binPath   string
+	args      string
+	execCount uint
+	dir       string
+}
+
+type execUnitContinuousF struct {
+	execUnitOneShotF
+	execTime time.Duration
+}
+
+func NewExecUnitContinuousF(binPath string, args string, execCount uint, execTime time.Duration, dir string) *execUnitContinuousF {
+	execUnitOneShotF := execUnitOneShotF{binPath: binPath, args: args, execCount: execCount, dir: dir}
+	return &execUnitContinuousF{execUnitOneShotF: execUnitOneShotF, execTime: execTime}
+}
+
+func NewExecUnitOneShotF(binPath string, args string, execCount uint, dir string) *execUnitOneShotF {
+	return &execUnitOneShotF{binPath: binPath, args: args, execCount: execCount, dir: dir}
+}
+
+func (t execUnitOneShotF) getBinPath() string {
+	return t.binPath
+}
+
+func (t execUnitOneShotF) getArgs() string {
+	return t.args
+}
+
+func (t execUnitOneShotF) getExecCount() uint {
+	return t.execCount
+}
+func (t execUnitOneShotF) getDir() string {
+	return t.dir
+}
+
+func (t execUnitContinuousF) getExecTime() time.Duration {
 	return t.execTime
 }

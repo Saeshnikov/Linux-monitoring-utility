@@ -24,8 +24,6 @@ var pathToTmp string
 
 func main() {
 
-	// bpftrace_time, program_time, syscalls, outputPath, _, _, err := config.ConfigRead()
-
 	syscalls, err := config.ConfigRead(&programConfig)
 	if err != nil {
 		log.Fatal(err)
@@ -38,9 +36,15 @@ func main() {
 	lsofLayer.DirToIgnore = programConfig.DirToIgnore
 	bpfParsing.DirToIgnore = programConfig.DirToIgnore
 	rpmLayer.RpmBinPath = programConfig.RpmBinPath
-	inodeStr, err := exec.Command("ls /", "-id").Output()
+	inodeStr, err := exec.Command("ls", "-id", "/").Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	inodeStr = inodeStr[:len(inodeStr)-3]
 	inodeInt, err := strconv.Atoi(string(inodeStr))
-
+	if err != nil {
+		log.Fatal(err)
+	}
 	bpfScriptFiles, err := bpfScript.GenerateBpfScript(syscalls, programConfig.OutputPath, inodeInt)
 	if err != nil {
 		log.Fatal(err)
@@ -65,18 +69,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	lsof := taskExecution.NewExecUnitOneShot("/usr/bin/lsof", "", 1)
+	lsof := taskExecution.NewExecUnitOneShotF("/usr/bin/lsof", "", 1, pathToTmp+"/tmp/lsof")
 
 	var bpfCommands []taskExecution.ExecUnit
 	bpfCommands = append(bpfCommands, *lsof)
 	for _, i := range bpfScriptFiles {
-		bpf := taskExecution.NewExecUnitContinuous(programConfig.BpftraceBinPath,
+		dir := i.Name()[:len(i.Name())-3]
+		bpf := taskExecution.NewExecUnitContinuousF(programConfig.BpftraceBinPath,
 			i.Name(),
 			uint(programConfig.ProgramTime/programConfig.ScriptTime),
-			time.Duration(programConfig.ScriptTime)*time.Second)
+			time.Duration(programConfig.ScriptTime)*time.Second, pathToTmp+"/tmp/"+dir)
 		bpfCommands = append(bpfCommands, *bpf)
 	}
-
+	fmt.Println("a")
 	err = taskExecution.StartTasks(pathToTmp, bpfCommands...)
 	if err != nil {
 		log.Fatal(err)
@@ -132,6 +137,9 @@ func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) err
 				defer f.Close()
 				scanner := bufio.NewScanner(f)
 				res, err = lsofLayer.LsofParsing(scanner)
+				if err != nil {
+					return err
+				}
 
 				fmt.Print("File with name: ", file.Name(), " to analyse... ")
 				rpmLayer.RPMlayer(res, dirPath, outputMap)
