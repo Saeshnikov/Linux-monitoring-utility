@@ -34,3 +34,7 @@ fsorw:
     - read
     - write
 semaphore:
+sharedMem:
+  standards:
+    - systemV
+    - posix
