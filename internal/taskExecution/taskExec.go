@@ -16,7 +16,7 @@ var processes []*exec.Cmd
 var hotExit chan bool
 var mutex sync.RWMutex
 
-func StartTasks(outDirPath string, toExec ...ExecUnit) error {
+func StartTasks(toExec ...ExecUnit) error {
 	var wg sync.WaitGroup
 	processes = make([]*exec.Cmd, len(toExec))
 	//function that writing programs output to {outDirPath}/tmp/{binary_filename.timestamp}
@@ -33,16 +33,15 @@ func StartTasks(outDirPath string, toExec ...ExecUnit) error {
 			return
 		}
 
-		n, err := file.Write(b.Bytes())
+		_, err = file.Write(b.Bytes())
 		if err != nil {
 			errChan <- err
 			return
 		}
-		fmt.Println(n)
 	}
 
 	//function that execute one shot for multiple times (doesn't wait for ending previous)
-	execOneShotF := func(index int, binPath string, outDirPath string, args string, execCount uint, errChan chan error) {
+	execOneShotF := func(index int, binPath string, outDirPath string, args []string, execCount uint, errChan chan error) {
 		defer wg.Done()
 
 		ons_run := func(p chan *exec.Cmd, c chan bytes.Buffer, errChan chan error) {
@@ -81,7 +80,7 @@ func StartTasks(outDirPath string, toExec ...ExecUnit) error {
 		}
 	}
 
-	execOneShotC := func(index int, binPath string, outChan chan chan bytes.Buffer, args string, execCount uint, errChan chan error) {
+	execOneShotC := func(index int, binPath string, outChan chan chan bytes.Buffer, args []string, execCount uint, errChan chan error) {
 		defer wg.Done()
 
 		ons_run := func(p chan *exec.Cmd, c chan bytes.Buffer, errChan chan error) {
@@ -121,7 +120,7 @@ func StartTasks(outDirPath string, toExec ...ExecUnit) error {
 	}
 
 	//function that execute contionuous for some time multiple times (starts new time is out, then ends previous)
-	execContinuousF := func(index int, binPath string, outDir string, args string, execCount uint, execTime time.Duration, errChan chan error) {
+	execContinuousF := func(index int, binPath string, outDir string, args []string, execCount uint, execTime time.Duration, errChan chan error) {
 		defer wg.Done()
 
 		con_run := func(p chan *exec.Cmd, c chan bytes.Buffer, errChan chan error) {
@@ -189,7 +188,7 @@ func StartTasks(outDirPath string, toExec ...ExecUnit) error {
 		fmt.Printf("Stopping %s process with PID: %d\n", binPath, prevProc.Process.Pid)
 	}
 
-	execContinuousC := func(index int, binPath string, outChan chan chan bytes.Buffer, args string, execCount uint, execTime time.Duration, errChan chan error) {
+	execContinuousC := func(index int, binPath string, outChan chan chan bytes.Buffer, args []string, execCount uint, execTime time.Duration, errChan chan error) {
 		defer wg.Done()
 
 		con_run := func(p chan *exec.Cmd, c chan bytes.Buffer, errChan chan error) {
@@ -351,10 +350,10 @@ func IntAllProcesses() error {
 	return nil
 }
 
-func toRunOneShot(binPath string, args string, c chan<- bytes.Buffer, p chan<- *exec.Cmd, errChan chan<- error) {
+func toRunOneShot(binPath string, args []string, c chan<- bytes.Buffer, p chan<- *exec.Cmd, errChan chan<- error) {
 	var cmd *exec.Cmd
-	if args != "" {
-		cmd = exec.Command(binPath, args)
+	if args != nil {
+		cmd = exec.Command(binPath, args...)
 	} else {
 		cmd = exec.Command(binPath)
 	}
@@ -385,17 +384,17 @@ func toRunOneShot(binPath string, args string, c chan<- bytes.Buffer, p chan<- *
 	c <- buffer
 }
 
-func toRunContinuous(binPath string, args string, p chan<- *exec.Cmd, c chan<- bytes.Buffer, errChan chan<- error) {
+func toRunContinuous(binPath string, args []string, p chan<- *exec.Cmd, c chan<- bytes.Buffer, errChan chan<- error) {
 
 	var buffer bytes.Buffer
 
 	var cmd *exec.Cmd
-	if args != "" {
-		cmd = exec.Command(binPath, args)
+	if args != nil {
+		cmd = exec.Command(binPath, args...)
 	} else {
 		cmd = exec.Command(binPath)
 	}
-	pipe, err := cmd.StdoutPipe()
+	pipe, err := cmd.StderrPipe()
 	if err != nil {
 		errChan <- err
 		return
@@ -412,6 +411,7 @@ func toRunContinuous(binPath string, args string, p chan<- *exec.Cmd, c chan<- b
 	line, err := reader.ReadString('\n')
 
 	for err == nil {
+		fmt.Print(line)
 		buffer.WriteString(line)
 		line, err = reader.ReadString('\n')
 	}

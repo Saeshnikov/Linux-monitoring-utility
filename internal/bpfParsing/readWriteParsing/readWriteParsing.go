@@ -3,19 +3,10 @@ package readWriteParsing
 import (
 	"bufio"
 	"fmt"
+	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
 	"os"
 	"strings"
 )
-
-// ---------------------------------------------------------------
-type Interaction interface {
-	String() string
-}
-
-type ParsingData struct {
-	PathsOfExecutableFiles [2]string
-	WayOfInteraction       Interaction
-}
 
 //----------------------------------------------------------------
 
@@ -31,7 +22,7 @@ type readWriteData struct {
 	pathOfExecutableFile, fileDescriptor, pathOfOpenedFile, readBytes, writtenBytes string
 }
 
-func Parse(fileName string) ([]ParsingData, error) {
+func Parse(fileName string) ([]parsingstruct.ParsingData, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -63,8 +54,8 @@ func contains(rwArr []readWriteData, rw readWriteData) bool {
 	return false
 }
 
-func packData(rwArr []readWriteData) []ParsingData {
-	var parsingArr []ParsingData
+func packData(rwArr []readWriteData) []parsingstruct.ParsingData {
+	var parsingArr []parsingstruct.ParsingData
 	for i := 0; i < len(rwArr); i++ {
 		rwInfo := ReadWriteInfo{PathOfOpenedFile: rwArr[i].pathOfOpenedFile,
 			ReadBytes: rwArr[i].readBytes, WrittenBytes: rwArr[i].writtenBytes}
@@ -76,7 +67,7 @@ func packData(rwArr []readWriteData) []ParsingData {
 			rwInfo.ReadBytes, rwInfo.WrittenBytes = "-", rwArr[i].writtenBytes
 		}
 		rwArr[i].pathOfExecutableFile = strings.TrimPrefix(rwArr[i].pathOfExecutableFile, "/snapshot")
-		parsingArr = append(parsingArr, ParsingData{[2]string{rwArr[i].pathOfExecutableFile, "-"}, rwInfo})
+		parsingArr = append(parsingArr, parsingstruct.ParsingData{PathsOfExecutableFiles: [2]string{rwArr[i].pathOfExecutableFile, "-"}, WayOfInteraction: rwInfo})
 	}
 	return parsingArr
 }

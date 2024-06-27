@@ -3,19 +3,10 @@ package sharedMemParsing
 import (
 	"bufio"
 	"fmt"
+	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
 	"os"
 	"strings"
 )
-
-// ---------------------------------------------------------------
-type Interaction interface {
-	String() string
-}
-
-type ParsingData struct {
-	PathsOfExecutableFiles [2]string
-	WayOfInteraction       Interaction
-}
 
 //----------------------------------------------------------------
 
@@ -31,7 +22,7 @@ type sharedMemData struct {
 	pathOfExecutableFile, key, id, typeIpc string
 }
 
-func Parse(fileName string) ([]ParsingData, error) {
+func Parse(fileName string) ([]parsingstruct.ParsingData, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -62,14 +53,14 @@ func contains(memArr []sharedMemData, mem sharedMemData) bool {
 	return false
 }
 
-func findConnection(memArr []sharedMemData) []ParsingData {
-	var parsingArr []ParsingData
+func findConnection(memArr []sharedMemData) []parsingstruct.ParsingData {
+	var parsingArr []parsingstruct.ParsingData
 	for i := 0; i < len(memArr); i++ {
 		for j := i + 1; j < len(memArr); j++ {
 			if memArr[i].id == memArr[j].id &&
 				memArr[i].pathOfExecutableFile != memArr[j].pathOfExecutableFile {
 				memInfo := SharedMemInfo{Ipc: "sharedMemory", Id: memArr[i].id, Key: memArr[i].key, Type: memArr[i].typeIpc}
-				parsingArr = append(parsingArr, ParsingData{[2]string{memArr[i].pathOfExecutableFile, memArr[j].pathOfExecutableFile}, memInfo})
+				parsingArr = append(parsingArr, parsingstruct.ParsingData{PathsOfExecutableFiles: [2]string{memArr[i].pathOfExecutableFile, memArr[j].pathOfExecutableFile}, WayOfInteraction: memInfo})
 			}
 		}
 	}
