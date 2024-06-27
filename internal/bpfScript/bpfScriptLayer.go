@@ -1,11 +1,12 @@
 package bpfScriptLayer
 
 import (
-	sock "monitoring-utility/bpfScript/socketScript"
-	sem "monitoring-utility/bpfScript/semScript"
-	pipe "monitoring-utility/bpfScript/namedPipeScript"
-	fs "monitoring-utility/bpfScript/fsorwScript"
-	shm "monitoring-utility/bpfScript/shmScript"
+	sock "linux-monitoring-utility/internal/bpfScript/socketScript"
+	sem "linux-monitoring-utility/internal/bpfScript/semScript"
+	pipe "linux-monitoring-utility/internal/bpfScript/namedPipeScript"
+	fs "linux-monitoring-utility/internal/bpfScript/fsorwScript"
+	shm "linux-monitoring-utility/internal/bpfScript/shmScript"
+	genStruct "linux-monitoring-utility/internal/bpfScript/generalStructIPC"
 	"errors"
 	"fmt"
 	"os"
@@ -38,16 +39,16 @@ func isValidIpc(ipc string) bool {
 	return false
 }
 
-func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode int) ([]*os.File, error) {
+func GenerateBpfScript(ipc []genStruct.IpcStruct, dirPath string, inode int) ([] *os.File, error) {
 	rootInode := inode
 
-	var returnFilesArr []*os.File
+	var returnFilesArr [] *os.File
 
-	for ipcType, option := range ipc {
-		if isValidIpc(ipcType) {
-			switch ipcType {
+	for _, opt := range ipc {
+		if isValidIpc(opt.IpcType) {
+			switch opt.IpcType {
 			case Socket.String():
-				path, err := checkDir(dirPath, ipcType)
+				path, err := checkDir(dirPath, opt.IpcType)
 				if err != nil {
 					return nil, err
 				}
@@ -61,13 +62,13 @@ func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode
 				}
 				defer file.Close()
 
-				err = sock.MakeSocketScript(file, option, rootInode)
+				err = sock.MakeSocketScript(file, opt.Option, rootInode)
 				if err != nil {
 					return nil, err
 				}
 				returnFilesArr = append(returnFilesArr, file)
 			case NamedPipe.String():
-				path, err := checkDir(dirPath, ipcType)
+				path, err := checkDir(dirPath, opt.IpcType)
 				if err != nil {
 					return nil, err
 				}
@@ -81,13 +82,13 @@ func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode
 				}
 				defer file.Close()
 
-				err = pipe.MakeNamedPipeScript(file, option, rootInode)
+				err = pipe.MakeNamedPipeScript(file, opt.Option, rootInode)
 				if err != nil {
 					return nil, err
 				}
 				returnFilesArr = append(returnFilesArr, file)
 			case Fsorw.String():
-				path, err := checkDir(dirPath, ipcType)
+				path, err := checkDir(dirPath, opt.IpcType)
 				if err != nil {
 					return nil, err
 				}
@@ -101,13 +102,13 @@ func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode
 				}
 				defer file.Close()
 
-				err = fs.MakeFsorwScript(file, option, rootInode)
+				err = fs.MakeFsorwScript(file, opt.Option, rootInode)
 				if err != nil {
 					return nil, err
 				}
 				returnFilesArr = append(returnFilesArr, file)
 			case Semaphore.String():
-				path, err := checkDir(dirPath, ipcType)
+				path, err := checkDir(dirPath, opt.IpcType)
 				if err != nil {
 					return nil, err
 				}
@@ -121,13 +122,13 @@ func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode
 				}
 				defer file.Close()
 
-				err = sem.MakeSemaphoreScript(file, option, rootInode)
+				err = sem.MakeSemaphoreScript(file, opt.Option, rootInode)
 				if err != nil {
 					return nil, err
 				}
 				returnFilesArr = append(returnFilesArr, file)
 			case SharedMem.String():
-				path, err := checkDir(dirPath, ipcType)
+				path, err := checkDir(dirPath, opt.IpcType)
 				if err != nil {
 					return nil, err
 				}
@@ -141,7 +142,7 @@ func GenerateBpfScript(ipc map[string]map[string][]string, dirPath string, inode
 				}
 				defer file.Close()
 
-				err = shm.MakeSharedMemScript(file, option, rootInode)
+				err = shm.MakeSharedMemScript(file, opt.Option, rootInode)
 				if err != nil {
 					return nil, err
 				}
