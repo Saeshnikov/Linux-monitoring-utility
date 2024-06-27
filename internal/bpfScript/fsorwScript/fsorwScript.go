@@ -479,6 +479,19 @@ func MakeFsorwScript(file *os.File, option []genStruct.OptionStruct, rootInode i
 					return err
 				}
 			}
+			for _, value := range arrOpenSyscall {
+				switch value {
+				case Readlink.String(), Readlinkat.String():
+				default:
+					openCommPiecess := openCommand{value, "", ""}
+					err := tmplOpenSyscallExit.Execute(file, openCommPiecess)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			file.WriteString(immutablePieces["openEnd"])
+			
 			if !isFsorwSyscall {
 				arrFsorwSyscall = []string{"read", "write"}
 				for _, value := range arrFsorwSyscall {
