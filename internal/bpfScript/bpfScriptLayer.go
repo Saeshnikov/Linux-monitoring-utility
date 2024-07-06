@@ -45,112 +45,114 @@ func GenerateBpfScript(ipc []genStruct.IpcStruct, dirPath string, inode int) ([]
 	var returnFilesArr [] *os.File
 
 	for _, opt := range ipc {
-		if isValidIpc(opt.IpcType) {
-			switch opt.IpcType {
-			case Socket.String():
-				path, err := checkDir(dirPath, opt.IpcType)
-				if err != nil {
-					return nil, err
-				}
-				err = createFile(path)
-				if err != nil {
-					return nil, err
-				}
-				file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
+		if opt.Enable {
+			if isValidIpc(opt.IpcType) {
+				switch opt.IpcType {
+				case Socket.String():
+					path, err := checkDir(dirPath, opt.IpcType)
+					if err != nil {
+						return nil, err
+					}
+					err = createFile(path)
+					if err != nil {
+						return nil, err
+					}
+					file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
+					if err != nil {
+						return nil, err
+					}
+					defer file.Close()
 
-				err = sock.MakeSocketScript(file, opt.Option, rootInode)
-				if err != nil {
-					return nil, err
-				}
-				returnFilesArr = append(returnFilesArr, file)
-			case NamedPipe.String():
-				path, err := checkDir(dirPath, opt.IpcType)
-				if err != nil {
-					return nil, err
-				}
-				err = createFile(path)
-				if err != nil {
-					return nil, err
-				}
-				file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
+					err = sock.MakeSocketScript(file, opt.Option, rootInode)
+					if err != nil {
+						return nil, err
+					}
+					returnFilesArr = append(returnFilesArr, file)
+				case NamedPipe.String():
+					path, err := checkDir(dirPath, opt.IpcType)
+					if err != nil {
+						return nil, err
+					}
+					err = createFile(path)
+					if err != nil {
+						return nil, err
+					}
+					file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
+					if err != nil {
+						return nil, err
+					}
+					defer file.Close()
 
-				err = pipe.MakeNamedPipeScript(file, opt.Option, rootInode)
-				if err != nil {
-					return nil, err
-				}
-				returnFilesArr = append(returnFilesArr, file)
-			case Fsorw.String():
-				path, err := checkDir(dirPath, opt.IpcType)
-				if err != nil {
-					return nil, err
-				}
-				err = createFile(path)
-				if err != nil {
-					return nil, err
-				}
-				file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
+					err = pipe.MakeNamedPipeScript(file, opt.Option, rootInode)
+					if err != nil {
+						return nil, err
+					}
+					returnFilesArr = append(returnFilesArr, file)
+				case Fsorw.String():
+					path, err := checkDir(dirPath, opt.IpcType)
+					if err != nil {
+						return nil, err
+					}
+					err = createFile(path)
+					if err != nil {
+						return nil, err
+					}
+					file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
+					if err != nil {
+						return nil, err
+					}
+					defer file.Close()
 
-				err = fs.MakeFsorwScript(file, opt.Option, rootInode)
-				if err != nil {
-					return nil, err
-				}
-				returnFilesArr = append(returnFilesArr, file)
-			case Semaphore.String():
-				path, err := checkDir(dirPath, opt.IpcType)
-				if err != nil {
-					return nil, err
-				}
-				err = createFile(path)
-				if err != nil {
-					return nil, err
-				}
-				file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
+					err = fs.MakeFsorwScript(file, opt.Option, rootInode)
+					if err != nil {
+						return nil, err
+					}
+					returnFilesArr = append(returnFilesArr, file)
+				case Semaphore.String():
+					path, err := checkDir(dirPath, opt.IpcType)
+					if err != nil {
+						return nil, err
+					}
+					err = createFile(path)
+					if err != nil {
+						return nil, err
+					}
+					file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
+					if err != nil {
+						return nil, err
+					}
+					defer file.Close()
 
-				err = sem.MakeSemaphoreScript(file, opt.Option, rootInode)
-				if err != nil {
-					return nil, err
-				}
-				returnFilesArr = append(returnFilesArr, file)
-			case SharedMem.String():
-				path, err := checkDir(dirPath, opt.IpcType)
-				if err != nil {
-					return nil, err
-				}
-				err = createFile(path)
-				if err != nil {
-					return nil, err
-				}
-				file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
+					err = sem.MakeSemaphoreScript(file, opt.Option, rootInode)
+					if err != nil {
+						return nil, err
+					}
+					returnFilesArr = append(returnFilesArr, file)
+				case SharedMem.String():
+					path, err := checkDir(dirPath, opt.IpcType)
+					if err != nil {
+						return nil, err
+					}
+					err = createFile(path)
+					if err != nil {
+						return nil, err
+					}
+					file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0666)
+					if err != nil {
+						return nil, err
+					}
+					defer file.Close()
 
-				err = shm.MakeSharedMemScript(file, opt.Option, rootInode)
-				if err != nil {
-					return nil, err
+					err = shm.MakeSharedMemScript(file, opt.Option, rootInode)
+					if err != nil {
+						return nil, err
+					}
+					returnFilesArr = append(returnFilesArr, file)
 				}
-				returnFilesArr = append(returnFilesArr, file)
+			} else {
+				err := errors.New("The ipc is not valid.")
+				return nil, err
 			}
-		} else {
-			err := errors.New("The ipc is not valid.")
-			return nil, err
 		}
 	}
 	return returnFilesArr, nil

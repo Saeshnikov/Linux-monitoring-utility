@@ -1,4 +1,5 @@
 - ipcType: socket
+  enable: true
   option:
     - optionType: sockSyscall
       options:
@@ -10,6 +11,7 @@
         - INET
         - INET6
 - ipcType: namedpipe
+  enable: true
   option:
     - optionType: openSyscall
       options:
@@ -23,6 +25,7 @@
         - fspick
         - open_by_handle_at
 - ipcType: fsorw
+  enable: true
   option:
     - optionType: openSyscall
       options:
@@ -42,9 +45,11 @@
         - read
         - write
 - ipcType: sharedMem
+  enable: true
   option:
     - optionType: standards
       options:
         - systemV
         - posix
 - ipcType: semaphore
+  enable: true
