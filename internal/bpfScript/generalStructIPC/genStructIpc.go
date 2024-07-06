@@ -7,5 +7,6 @@ type OptionStruct struct {
 
 type IpcStruct struct {
 	IpcType string `yaml:"ipcType"`
+	Enable  bool `yaml:"enable"`
 	Option  []OptionStruct `yaml:"option"`
 }
