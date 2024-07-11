@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	bpfParsing "linux-monitoring-utility/internal/bpfParsing/bpftraceParsing"
+	"linux-monitoring-utility/internal/bpfParsing/namedPipesParsing"
 	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
 	"linux-monitoring-utility/internal/bpfParsing/readWriteParsing"
+	"linux-monitoring-utility/internal/bpfParsing/semaphoreParsing"
+	"linux-monitoring-utility/internal/bpfParsing/sharedMemParsing"
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
 	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
@@ -28,7 +31,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	os.Setenv("BPFTRACE_STRLEN", programConfig.BPFTRACE_STRLEN)
+	// os.Setenv("BPFTRACE_STRLEN", programConfig.BPFTRACE_STRLEN)
 	os.Setenv("BPFTRACE_MAP_KEYS_MAX", programConfig.BPFTRACE_MAP_KEYS_MAX)
 	os.Setenv("BPFTRACE_LOG_SIZE", strconv.Itoa(10000000))
 
@@ -50,7 +53,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if programConfig.OutputPath == "" {
+	if programConfig.OutputPath == "." {
 		err = os.MkdirAll("out", os.FileMode(0777))
 
 		if err != nil {
@@ -98,13 +101,13 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	file, err := os.Create(strconv.FormatInt(time.Now().Unix(), 10))
+	file, err := os.Create("out/" + strconv.FormatInt(time.Now().Unix(), 10))
 	if err != nil {
 		log.Fatal(err)
 	}
-	file.WriteString("PACKAGE1 PACKAGE2 INTERACTION")
+	file.WriteString("PACKAGE1 \t\tPACKAGE2 \t\tINTERACTION\n")
 	for _, data := range parsedData {
-		file.WriteString(data.PathsOfExecutableFiles[0] + " , " + data.PathsOfExecutableFiles[1] + " : " + data.WayOfInteraction.String())
+		file.WriteString(data.PathsOfExecutableFiles[0] + "\t , \t" + data.PathsOfExecutableFiles[1] + "\t : \t" + data.WayOfInteraction.String() + "\n")
 	}
 	// err = exportToJson(programConfig.OutputPath, outputMap)
 	// if err != nil {
@@ -153,7 +156,7 @@ func toParse(directory string) ([]parsingstruct.ParsingData, error) {
 	if err == nil {
 		for _, file := range files {
 			if !file.IsDir() {
-				data, err := readWriteParsing.Parse(directory + "/namedpipe/" + file.Name())
+				data, err := namedPipesParsing.Parse(directory + "/namedpipe/" + file.Name())
 				if err != nil {
 					return nil, err
 				}
@@ -166,7 +169,7 @@ func toParse(directory string) ([]parsingstruct.ParsingData, error) {
 	if err == nil {
 		for _, file := range files {
 			if !file.IsDir() {
-				data, err := readWriteParsing.Parse(directory + "/semaphore/" + file.Name())
+				data, err := semaphoreParsing.Parse(directory + "/semaphore/" + file.Name())
 				if err != nil {
 					return nil, err
 				}
@@ -179,7 +182,7 @@ func toParse(directory string) ([]parsingstruct.ParsingData, error) {
 	if err == nil {
 		for _, file := range files {
 			if !file.IsDir() {
-				data, err := readWriteParsing.Parse(directory + "/sharedMem/" + file.Name())
+				data, err := sharedMemParsing.Parse(directory + "/sharedMem/" + file.Name())
 				if err != nil {
 					return nil, err
 				}
@@ -191,6 +194,7 @@ func toParse(directory string) ([]parsingstruct.ParsingData, error) {
 	return parsingInfo, nil
 }
 
+// not available yet
 func toAnalyse(data []parsingstruct.ParsingData) ([]parsingstruct.ParsingData, error) {
 	newParsingData := make([]parsingstruct.ParsingData, len(data))
 	for n, unit := range data {

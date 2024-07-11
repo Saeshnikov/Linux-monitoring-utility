@@ -394,7 +394,7 @@ func toRunContinuous(binPath string, args []string, p chan<- *exec.Cmd, c chan<-
 	} else {
 		cmd = exec.Command(binPath)
 	}
-	pipe, err := cmd.StderrPipe()
+	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		errChan <- err
 		return
@@ -411,7 +411,6 @@ func toRunContinuous(binPath string, args []string, p chan<- *exec.Cmd, c chan<-
 	line, err := reader.ReadString('\n')
 
 	for err == nil {
-		fmt.Print(line)
 		buffer.WriteString(line)
 		line, err = reader.ReadString('\n')
 	}
