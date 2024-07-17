@@ -2,14 +2,13 @@ package config
 
 import (
 	genStruct "linux-monitoring-utility/internal/bpfScript/generalStructIPC"
+
 	"errors"
 	"flag"
 	"os"
 
 	"gopkg.in/yaml.v3"
 )
-
-type BpfTraceConfig map[string]map[string][]string
 
 type ConfigFile struct {
 	ScriptTime            uint     `yaml:"scriptTime"`
@@ -136,29 +135,14 @@ func ConfigRead(configStruct *ConfigFile) ([]genStruct.IpcStruct, error) {
 		return nil, err
 	}
 
-	var bpftraceConfig BpfTraceConfig
+	var BpfTraceConfig []genStruct.IpcStruct
 
-	err = yaml.Unmarshal(bpftraceYamlFile, &bpftraceConfig)
+	err = yaml.Unmarshal(bpftraceYamlFile, &BpfTraceConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	//////////////////////////////////////////////////////////////
-	var bpfSyscalls []genStruct.IpcStruct
-	for typeIpc, opts := range bpftraceConfig {
-		var oneIpc genStruct.IpcStruct
-		oneIpc.IpcType = typeIpc
-		for typeOpt, opt := range opts {
-			var oneOpt genStruct.OptionStruct
-			oneOpt.OptionType = typeOpt
-			oneOpt.Options = append(oneOpt.Options, opt...)
-			oneIpc.Option = append(oneIpc.Option, oneOpt)
-		}
-		bpfSyscalls = append(bpfSyscalls, oneIpc)
-	}
-
-	return bpfSyscalls, nil
-	/////////////////////////////////////////////////////////////
+	return BpfTraceConfig, nil
 }
 
 func configFileRead(configFileName string, configStruct *ConfigFile) error {
