@@ -12,10 +12,10 @@ var (
 		"partFullPath": "",
 
 		"shmHeader":     "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#include <linux/limits.h>\n#endif\n\n",
-		"shmSystVStart": "tracepoint:syscalls:sys_enter_shmget\n{\n\t@shmkey[tid] = args.key;\n}\n\ntracepoint:syscalls:sys_exit_shmget\n/@shmkey[tid]/\n{\n\t@shmid[tid] = args.ret;\n}\n\ntracepoint:syscalls:sys_exit_shmat\n/@shmid[tid]/\n{\n\t",
+		"shmSystVStart": "tracepoint:syscalls:sys_enter_shmget\n{\n\t@shmkey[tid] = args->key;\n}\n\ntracepoint:syscalls:sys_exit_shmget\n/@shmkey[tid]/\n{\n\t@shmid[tid] = args->ret;\n}\n\ntracepoint:syscalls:sys_exit_shmat\n/@shmid[tid]/\n{\n\t",
 		"shmSystVEnd":   "$type = " + `"systemV"` + ";\n\t" + "printf(" + `"%` + `x %` + `d %` + `s"` + ", @shmkey[tid], @shmid[tid], $type);\n}\n\n",
-		"shmPosixStart": "tracepoint:syscalls:sys_enter_openat,\n{\n\t$ret = strcontains(str(args.filename), " + `"dev/shm/"` + ");\n\tif ($ret == 1) {\n\t\t@filename[tid] = args.filename;\n\t}\n}\n\ntracepoint:syscalls:sys_exit_openat,\n/@filename[tid]/\n{\n\tif (args.ret > 0) {\n\t",
-		"shmPosixEnd":   "@posshmid[tid] = args.ret;\n\t@posshmid[tid] = args.ret;\n\tprintf(" + `"%` + `s "` + ", str(@filename[tid]));\n\t}\n}\n\ntracepoint:syscalls:sys_enter_mmap\n/@posshmid[tid]/\n{\n\t$type = " + `"posix"` + ";\n\tprintf(" + `"%` + `d %` + `s"` + ", @posshmid[tid], $type);\n}\n\n",
+		"shmPosixStart": "tracepoint:syscalls:sys_enter_openat,\n{\n\t$ret = strcontains(str(args->filename), " + `"dev/shm/"` + ");\n\tif ($ret == 1) {\n\t\t@filename[tid] = args->filename;\n\t}\n}\n\ntracepoint:syscalls:sys_exit_openat,\n/@filename[tid]/\n{\n\tif (args->ret > 0) {\n\t",
+		"shmPosixEnd":   "@posshmid[tid] = args->ret;\n\t@posshmid[tid] = args->ret;\n\tprintf(" + `"%` + `s "` + ", str(@filename[tid]));\n\t}\n}\n\ntracepoint:syscalls:sys_enter_mmap\n/@posshmid[tid]/\n{\n\t$type = " + `"posix"` + ";\n\tprintf(" + `"%` + `d %` + `s"` + ", @posshmid[tid], $type);\n}\n\n",
 		"shmENDStrart":  "END\n{\n\t",
 		"shmENDsysV":    "clear(@shmkey);\n\tclear(@shmid);\n\t",
 		"shmENDposix":   "clear(@posshmid);\n\tclear(@full_path_comm);\n\tclear(@filename);\n\t",
