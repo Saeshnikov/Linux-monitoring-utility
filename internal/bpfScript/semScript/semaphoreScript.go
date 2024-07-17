@@ -12,7 +12,7 @@ var (
 		"partFullPath": "",
 
 		"semHeader": "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#endif\n\n",
-		"semStart":  "tracepoint:syscalls:sys_enter_semget\n{\n\t@semkey[tid] = args.key;\n}\n\ntracepoint:syscalls:sys_exit_semget\n/@semkey[tid]/\n{\n\t@semid[tid] = args.ret;\n}\n\ntracepoint:syscalls:sys_enter_semop,\ntracepoint:syscalls:sys_enter_semtimedop,\n/@semid[tid]/\n{\n\t",
+		"semStart":  "tracepoint:syscalls:sys_enter_semget\n{\n\t@semkey[tid] = args->key;\n}\n\ntracepoint:syscalls:sys_exit_semget\n/@semkey[tid]/\n{\n\t@semid[tid] = args->ret;\n}\n\ntracepoint:syscalls:sys_enter_semop,\ntracepoint:syscalls:sys_enter_semtimedop,\n/@semid[tid]/\n{\n\t",
 		"semEnd":    "printf(" + `"%` + "x %" + `d",` + "@semkey[tid], @semid[tid]);\n}\n\nEND\n{\n\tclear(@semkey);\n\tclear(@semid);\n\tclear(@full_path_comm);\n}\n",
 	}
 )
