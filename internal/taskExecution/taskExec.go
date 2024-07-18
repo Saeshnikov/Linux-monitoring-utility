@@ -108,8 +108,8 @@ func StartTasks(toExec ...ExecUnit) error {
 			mutex.Lock()
 			processes[index] = p_
 			mutex.Unlock()
-			wg.Add(1)
 			outChan <- buf
+
 			select {
 			case err := <-errChan:
 				errChan <- err
@@ -244,7 +244,6 @@ func StartTasks(toExec ...ExecUnit) error {
 				return
 			case <-timer:
 			}
-			wg.Add(1)
 			outChan <- buf
 		}
 
@@ -256,8 +255,7 @@ func StartTasks(toExec ...ExecUnit) error {
 		fmt.Printf("Stopping %s process with PID: %d\n", binPath, prevProc.Process.Pid)
 	}
 
-	var last_con int
-	last_con = -1
+	last_con := -1
 	errChan := make(chan error, len(toExec))
 	for index, unit := range toExec {
 
@@ -312,12 +310,12 @@ func StartTasks(toExec ...ExecUnit) error {
 			return fmt.Errorf("recieved unexpected type : %s", v)
 		}
 	}
+
 	waitCh := make(chan bool, 1)
 	go func() {
 		wg.Wait()
 		waitCh <- true
 	}()
-
 	select {
 	case <-waitCh:
 		return nil
