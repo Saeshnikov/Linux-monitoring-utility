@@ -14,13 +14,13 @@ var (
 
 		"fsorwHeader":    "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#endif\n\n",
 		"filter":         "\n/@oldname[tid]/",
-		"openToHandleAt": "\ntracepoint:syscalls:sys_exit_name_to_handle_at\n/@name[tid]/\n{\n\t$ret = args.ret;\n\t@fdHandle[tid] = $ret >= 0 ? $ret : -1;\n}\ntracepoint:syscalls:sys_enter_open_by_handle_at\n/@fdHandle[tid]/\n{\n\t@filename[tid] = @name[tid];\n\tdelete(@fdHandle[tid]);\n}\n",
-		"openEnd":        "\n/@filename[tid]/\n{\n\t$ret = args.ret;\n\t@fd[tid] = $ret >= 0 ? $ret : -1;\n}\n",
+		"openToHandleAt": "\ntracepoint:syscalls:sys_exit_name_to_handle_at\n/@name[tid]/\n{\n\t$ret = args->ret;\n\t@fdHandle[tid] = $ret >= 0 ? $ret : -1;\n}\ntracepoint:syscalls:sys_enter_open_by_handle_at\n/@fdHandle[tid]/\n{\n\t@filename[tid] = @name[tid];\n\tdelete(@fdHandle[tid]);\n}\n",
+		"openEnd":        "\n/@filename[tid]/\n{\n\t$ret = args->ret;\n\t@fd[tid] = $ret >= 0 ? $ret : -1;\n}\n",
 	}
 
 	tmplOpenSyscallEnter, _  = template.New("OpenSyscallExit").Parse("\ntracepoint:syscalls:sys_enter_{{.SyscallName}}")
-	tmplOpenSyscallBody, _   = template.New("OpenSyscallBody").Parse("\n{\n\t@{{.ReceivingArray}}[tid] = args.{{.CollectingArgs}};\n}\n")
-	tmplFsorwCommandStart, _ = template.New("FsorwCommandStart").Parse("\ntracepoint:syscalls:sys_exit_{{.SyscallName}},\ntracepoint:syscalls:sys_exit_{{.SyscallName}}v,\ntracepoint:syscalls:sys_exit_p{{.SyscallName}}v\n/@fd[tid]/\n{\n\t$ret = args.ret;\n\t$nbyte = $ret >= 0 ? $ret : -1;\n\t$nothing = " + `0` + ";\n\n\t")
+	tmplOpenSyscallBody, _   = template.New("OpenSyscallBody").Parse("\n{\n\t@{{.ReceivingArray}}[tid] = args->{{.CollectingArgs}};\n}\n")
+	tmplFsorwCommandStart, _ = template.New("FsorwCommandStart").Parse("\ntracepoint:syscalls:sys_exit_{{.SyscallName}},\ntracepoint:syscalls:sys_exit_{{.SyscallName}}v,\ntracepoint:syscalls:sys_exit_p{{.SyscallName}}v\n/@fd[tid]/\n{\n\t$ret = args->ret;\n\t$nbyte = $ret >= 0 ? $ret : -1;\n\t$nothing = " + `0` + ";\n\n\t")
 	tmplFsorwCommandEnd, _   = template.New("FsorwCommandEnd").Parse("printf(" + `"%` + "d %" + "s %" + "d %" + `d"` + ", @fd[tid], str(@filename[tid]), ${{.ReadByte}}, ${{.WriteByte}});\n\n\tdelete(@filename[tid]);\n\tdelete(@fd[tid]);\n}\n")
 	tmplFsorwEnd, _          = template.New("FsorwEnd").Parse("\nEND\n{\n\t{{ range $index, $element := .}}{{ if $index }} {{ end }}{{$element}}{{ end }}\n}\n")
 

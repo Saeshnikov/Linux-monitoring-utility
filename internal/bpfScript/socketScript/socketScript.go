@@ -13,12 +13,12 @@ var (
 		"partFullPath": "",
 
 		"sockHeader":       "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#include <linux/socket.h>\n#include <net/sock.h>\n#else\n#include <sys/socket.h>\n#endif\n",
-		"sockConnectStart": "\ntracepoint:syscalls:sys_enter_connect\n{\n\t$sk = ((struct sockaddr *) args.uservaddr);\n\t@inet_family1[tid] = $sk->sa_family;\n\t@fd1[tid] = args.fd;\n}\n\ntracepoint:syscalls:sys_exit_connect\n/@fd1[tid]/\n{\n\t",
+		"sockConnectStart": "\ntracepoint:syscalls:sys_enter_connect\n{\n\t$sk = ((struct sockaddr *) args->uservaddr);\n\t@inet_family1[tid] = $sk->sa_family;\n\t@fd1[tid] = args->fd;\n}\n\ntracepoint:syscalls:sys_exit_connect\n/@fd1[tid]/\n{\n\t",
 		"sockConnectEnd":   "\t}\n\tdelete(@fd1[tid]);\n\tdelete(@inet_family1[tid]);\n}\n",
-		"sockIfConnect":    "$ret = args.ret;\n\tif ($ret == 0) {\n",
-		"sockAcceptStart":  "\ntracepoint:syscalls:sys_enter_bind\n{\n\t$sk = ((struct sockaddr *) args.umyaddr);\n\t@inet_family2[tid] = $sk->sa_family;\n\t@fd2[tid] = args.fd;\n}\n\ntracepoint:syscalls:sys_exit_accept\n/@fd2[tid]/\n{\n\t",
+		"sockIfConnect":    "$ret = args->ret;\n\tif ($ret == 0) {\n",
+		"sockAcceptStart":  "\ntracepoint:syscalls:sys_enter_bind\n{\n\t$sk = ((struct sockaddr *) args->umyaddr);\n\t@inet_family2[tid] = $sk->sa_family;\n\t@fd2[tid] = args->fd;\n}\n\ntracepoint:syscalls:sys_exit_accept\n/@fd2[tid]/\n{\n\t",
 		"sockAcceptEnd":    "\t}\n\tdelete(@fd2[tid]);\n\tdelete(@inet_family2[tid]);\n}\n",
-		"sockIfAccept":     "$ret = args.ret;\n\tif ($ret > 0) {\n",
+		"sockIfAccept":     "$ret = args->ret;\n\tif ($ret > 0) {\n",
 	}
 
 	tmplSockProtocol, _ = template.New("SockProtocol").Parse("\t\tif (@inet_family{{.Number}}[tid] == AF_{{.Protocol}}) {\n\t\t\tprintf(" + `"%` + `s %` + `s %` + `d"` + ", " + `"{{.TypeSyscall}}"` + ", " + `"{{.Protocol}}"` + ", @fd{{.Number}}[tid]);\n\t\t}\n")
