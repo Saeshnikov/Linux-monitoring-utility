@@ -5,3 +5,4 @@ result.json
 script.bt
 /tmp/
 *.bt
+/out/*

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	bpfParsing "linux-monitoring-utility/internal/bpfParsing/bpftraceParsing"
 	"linux-monitoring-utility/internal/bpfParsing/namedPipesParsing"
 	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
@@ -13,13 +11,13 @@ import (
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
 	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
+	rpmanalysis "linux-monitoring-utility/internal/rpmAnalysis"
 	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -56,6 +54,7 @@ func main() {
 	}
 
 	if programConfig.OutputPath == "." {
+		programConfig.OutputPath = "./out"
 		err = os.MkdirAll("out", os.FileMode(0777))
 
 		if err != nil {
@@ -88,33 +87,31 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	analysedData, err := toAnalyse(parsedData)
+
+	analysedData, err := rpmanalysis.ToAnalyse(parsedData, programConfig.RpmBinPath, 4)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("out/" + strconv.FormatInt(time.Now().Unix(), 10))
-	if err != nil {
-		log.Fatal(err)
-	}
-	file.WriteString("PACKAGE1 \t\tPACKAGE2 \t\tINTERACTION\n")
-	for _, data := range analysedData {
-		file.WriteString(data.PathsOfExecutableFiles[0] + "\t , \t" + data.PathsOfExecutableFiles[1] + "\t : \t" + data.WayOfInteraction.String() + "\n")
-	}
+	exportToJson(programConfig.OutputPath, analysedData)
+
+	// file, err := os.Create("out/" + strconv.FormatInt(time.Now().Unix(), 10))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// file.WriteString("PACKAGE1 \t\tPACKAGE2 \t\tINTERACTION\n")
+	// for _, data := range analysedData {
+	// 	file.WriteString(data.PathsOfExecutableFiles[0] + "\t , \t" + data.PathsOfExecutableFiles[1] + "\t : \t" + data.WayOfInteraction.String() + "\n")
+	// }
 }
 
-func exportToJson(filePath string, outputMap map[string]bool) error {
+func exportToJson(filePath string, data []parsingstruct.ParsingData) error {
 
-	entriesArr := make([]string, 0)
-
-	for entry := range outputMap {
-		entriesArr = append(entriesArr, entry)
-	}
-	jsonArray, err := json.Marshal(entriesArr)
+	jsonArray, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	outputFile, err := os.Create(filePath + "/result.json")
+	outputFile, err := os.Create(filePath + "/" + strconv.FormatInt(time.Now().Unix(), 10) + ".json")
 	if err != nil {
 		return err
 	}
@@ -180,45 +177,4 @@ func toParse(directory string) ([]parsingstruct.ParsingData, error) {
 	}
 
 	return parsingInfo, nil
-}
-
-// not available yet
-func toAnalyse(data []parsingstruct.ParsingData) ([]parsingstruct.ParsingData, error) {
-	var newParsingData []parsingstruct.ParsingData
-	for n, unit := range data {
-		fmt.Println(strconv.Itoa(n) + " ===========")
-		ch1 := make(chan chan bytes.Buffer, 1)
-
-		ch2 := make(chan chan bytes.Buffer, 1)
-		tmp1 := taskExecution.NewExecUnitOneShotC(programConfig.RpmBinPath, []string{"-qf", unit.PathsOfExecutableFiles[0]}, 1, ch1)
-		tmp2 := taskExecution.NewExecUnitOneShotC(programConfig.RpmBinPath, []string{"-qf", unit.PathsOfExecutableFiles[1]}, 1, ch2)
-		go func(n int, i parsingstruct.Interaction) {
-			var s parsingstruct.ParsingData
-			s.WayOfInteraction = i
-			newPaths := make([]string, 2)
-			c1 := <-ch1
-			c2 := <-ch2
-			b1 := <-c1
-			b2 := <-c2
-			b := b1.String()
-			if b == "" || len(strings.Split(b, " ")) > 1 {
-				return
-			}
-			newPaths[0] = b[:len(b)-1]
-
-			b = b2.String()
-			fmt.Println(newPaths[0])
-			if b != "" && len(strings.Split(b, " ")) == 1 {
-				newPaths[1] = b[:len(b)-1]
-			}
-
-			s.PathsOfExecutableFiles = [2]string(newPaths)
-			newParsingData = append(newParsingData, s)
-		}(n, unit.WayOfInteraction)
-		err := taskExecution.StartTasks(*tmp1, *tmp2)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return newParsingData, nil
 }
