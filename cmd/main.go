@@ -1,21 +1,23 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
-	"fmt"
 	bpfParsing "linux-monitoring-utility/internal/bpfParsing/bpftraceParsing"
+	"linux-monitoring-utility/internal/bpfParsing/namedPipesParsing"
+	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
+	"linux-monitoring-utility/internal/bpfParsing/readWriteParsing"
+	"linux-monitoring-utility/internal/bpfParsing/semaphoreParsing"
+	"linux-monitoring-utility/internal/bpfParsing/sharedMemParsing"
 	bpfScript "linux-monitoring-utility/internal/bpfScript"
 	config "linux-monitoring-utility/internal/config"
 	lsofLayer "linux-monitoring-utility/internal/lsofLayer"
+	rpmanalysis "linux-monitoring-utility/internal/rpmAnalysis"
 	rpmLayer "linux-monitoring-utility/internal/rpmLayer"
 	taskExecution "linux-monitoring-utility/internal/taskExecution"
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -29,8 +31,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	os.Setenv("BPFTRACE_STRLEN", programConfig.BPFTRACE_STRLEN)
+	// os.Setenv("BPFTRACE_STRLEN", programConfig.BPFTRACE_STRLEN)
 	os.Setenv("BPFTRACE_MAP_KEYS_MAX", programConfig.BPFTRACE_MAP_KEYS_MAX)
+	os.Setenv("BPFTRACE_LOG_SIZE", strconv.Itoa(10000000))
 
 	lsofLayer.LsofBinPath = programConfig.LsofBinPath
 	lsofLayer.DirToIgnore = programConfig.DirToIgnore
@@ -50,7 +53,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if programConfig.OutputPath == "" {
+	if programConfig.OutputPath == "." {
+		programConfig.OutputPath = "./out"
 		err = os.MkdirAll("out", os.FileMode(0777))
 
 		if err != nil {
@@ -64,52 +68,50 @@ func main() {
 		defer os.RemoveAll(pathToTmp + "/tmp")
 	}
 
-	outputMap, err := rpmLayer.FindAllPackages()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	lsof := taskExecution.NewExecUnitOneShotF("/usr/bin/lsof", "", 1, pathToTmp+"/tmp/lsof")
-
 	var bpfCommands []taskExecution.ExecUnit
-	bpfCommands = append(bpfCommands, *lsof)
 	for _, i := range bpfScriptFiles {
 		dir := i.Name()[:len(i.Name())-3]
 		bpf := taskExecution.NewExecUnitContinuousF(programConfig.BpftraceBinPath,
-			i.Name(),
+			[]string{i.Name()},
 			uint(programConfig.ProgramTime/programConfig.ScriptTime),
 			time.Duration(programConfig.ScriptTime)*time.Second, pathToTmp+"/tmp/"+dir)
 		bpfCommands = append(bpfCommands, *bpf)
 	}
-	fmt.Println("a")
-	err = taskExecution.StartTasks(pathToTmp, bpfCommands...)
+	err = taskExecution.StartTasks(bpfCommands...)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = toAnalyse(pathToTmp+"/tmp/", programConfig.OutputPath, &outputMap)
+	parsedData, err := toParse(pathToTmp + "/tmp")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = exportToJson(programConfig.OutputPath, outputMap)
+	analysedData, err := rpmanalysis.ToAnalyse(parsedData, programConfig.RpmBinPath, 4)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	exportToJson(programConfig.OutputPath, analysedData)
+
+	// file, err := os.Create("out/" + strconv.FormatInt(time.Now().Unix(), 10))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// file.WriteString("PACKAGE1 \t\tPACKAGE2 \t\tINTERACTION\n")
+	// for _, data := range analysedData {
+	// 	file.WriteString(data.PathsOfExecutableFiles[0] + "\t , \t" + data.PathsOfExecutableFiles[1] + "\t : \t" + data.WayOfInteraction.String() + "\n")
+	// }
 }
 
-func exportToJson(filePath string, outputMap map[string]bool) error {
+func exportToJson(filePath string, data []parsingstruct.ParsingData) error {
 
-	entriesArr := make([]string, 0)
-
-	for entry := range outputMap {
-		entriesArr = append(entriesArr, entry)
-	}
-	jsonArray, err := json.Marshal(entriesArr)
+	jsonArray, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	outputFile, err := os.Create(filePath + "/result.json")
+	outputFile, err := os.Create(filePath + "/" + strconv.FormatInt(time.Now().Unix(), 10) + ".json")
 	if err != nil {
 		return err
 	}
@@ -120,43 +122,59 @@ func exportToJson(filePath string, outputMap map[string]bool) error {
 	return nil
 }
 
-func toAnalyse(directory string, dirPath string, outputMap *map[string]bool) error {
-	files, err := os.ReadDir(directory)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, file := range files {
-		if !file.IsDir() {
-			if strings.Split(file.Name(), ".")[0] == "lsof" {
-				var res []string
-				filePath := filepath.Join(directory, file.Name())
-				f, err := os.Open(filePath)
+func toParse(directory string) ([]parsingstruct.ParsingData, error) {
+	var parsingInfo []parsingstruct.ParsingData
+	files, err := os.ReadDir(directory + "/fsorw/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := readWriteParsing.Parse(directory + "/fsorw/" + file.Name())
 				if err != nil {
-					log.Fatal(err)
+					return nil, err
 				}
-				defer f.Close()
-				scanner := bufio.NewScanner(f)
-				res, err = lsofLayer.LsofParsing(scanner)
-				if err != nil {
-					return err
-				}
-
-				fmt.Print("File with name: ", file.Name(), " to analyse... ")
-				rpmLayer.RPMlayer(res, dirPath, outputMap)
-				fmt.Print(" DONE\n")
-
-			} else {
-				filePath := filepath.Join(directory, file.Name())
-				res, err := bpfParsing.Parse(filePath)
-				if err != nil {
-					log.Fatal(err)
-				}
-				fmt.Print("File with name: ", file.Name(), " to analyse... ")
-				rpmLayer.RPMlayer(res, dirPath, outputMap)
-				fmt.Print(" DONE\n")
+				parsingInfo = append(parsingInfo, data...)
 			}
 		}
-
 	}
-	return nil
+
+	files, err = os.ReadDir(directory + "/namedpipe/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := namedPipesParsing.Parse(directory + "/namedpipe/" + file.Name())
+				if err != nil {
+					return nil, err
+				}
+				parsingInfo = append(parsingInfo, data...)
+			}
+		}
+	}
+
+	files, err = os.ReadDir(directory + "/semaphore/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := semaphoreParsing.Parse(directory + "/semaphore/" + file.Name())
+				if err != nil {
+					return nil, err
+				}
+				parsingInfo = append(parsingInfo, data...)
+			}
+		}
+	}
+
+	files, err = os.ReadDir(directory + "/sharedMem/")
+	if err == nil {
+		for _, file := range files {
+			if !file.IsDir() {
+				data, err := sharedMemParsing.Parse(directory + "/sharedMem/" + file.Name())
+				if err != nil {
+					return nil, err
+				}
+				parsingInfo = append(parsingInfo, data...)
+			}
+		}
+	}
+
+	return parsingInfo, nil
 }
