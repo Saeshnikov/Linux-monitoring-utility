@@ -5,18 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	parsingstruct "linux-monitoring-utility/internal/bpfParsing/parsingStruct"
 )
-
-// ---------------------------------------------------------------
-type Interaction interface {
-	String() string
-}
-
-type ParsingData struct {
-	PathsOfExecutableFiles [2]string
-	WayOfInteraction       Interaction
-}
-//----------------------------------------------------------------
 
 type SocketInfo struct {
 	Ipc, Protocol string
@@ -30,7 +21,7 @@ type socketData struct {
 	pathOfExecutableFile, syscallType, protocol, fileDescriptor string
 }
 
-func Parse(fileName string) ([]ParsingData, error) {
+func Parse(fileName string) ([]parsingstruct.ParsingData, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -61,15 +52,17 @@ func contains(sockArr []socketData, sock socketData) bool {
 	return false
 }
 
-func findConnection(sockArr []socketData) []ParsingData {
-	var parsingArr []ParsingData
+func findConnection(sockArr []socketData) []parsingstruct.ParsingData {
+	var parsingArr []parsingstruct.ParsingData
 	for i := 0; i < len(sockArr); i++ {
 		for j := i + 1; j < len(sockArr); j++ {
 			if sockArr[i].fileDescriptor == sockArr[j].fileDescriptor &&
 				sockArr[i].syscallType != sockArr[j].syscallType &&
 				sockArr[i].protocol == sockArr[j].protocol {
 				sockInfo := SocketInfo{Ipc: "socket", Protocol: sockArr[i].protocol}
-				parsingArr = append(parsingArr, ParsingData{[2]string{sockArr[i].pathOfExecutableFile, sockArr[j].pathOfExecutableFile}, sockInfo})
+				parsingArr = append(parsingArr, 
+						    parsingstruct.ParsingData{PathsOfExecutableFiles: [2]string{sockArr[i].pathOfExecutableFile, sockArr[j].pathOfExecutableFile}, 
+									      WayOfInteraction: sockInfo})
 			}
 		}
 	}
