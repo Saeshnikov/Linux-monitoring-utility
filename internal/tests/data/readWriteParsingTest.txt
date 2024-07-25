@@ -1,0 +1,72 @@
+Attaching 51 probes...
+
+/snapshot/usr/bin/bpftrace 102 720
+/kernel/debug/tracing/events/syscalls/sys_exit_readv/id 4 0
+/snapshot/usr/bin/bpftrace 104 716
+/kernel/debug/tracing/events/syscalls/sys_exit_preadv/id 4 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/bpftrace 106 726
+/kernel/debug/tracing/events/syscalls/sys_exit_write/id 4 0
+/snapshot/usr/bin/plasmashell -1 / 0 8
+/snapshot/usr/bin/bpftrace 108 718
+/kernel/debug/tracing/events/syscalls/sys_exit_writev/id 4 0
+/snapshot/usr/bin/bpftrace 110 712
+/kernel/debug/tracing/events/syscalls/sys_exit_pwritev/id 4 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/plasmashell -1 /usr/share/icons/breeze/apps/32/l10n 0 8
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 3 /lib64/libc.so.6 832 0
+/snapshot/usr/bin/plasmashell -1 / 8 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/home/anna/Desktop/bpftrace/pipe/fifoclient.out 3 /lib64/libc.so.6 832 0
+/home/anna/Desktop/bpftrace/pipe/fifoclient.out 3 MYFIFO 0 14
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 3 MYFIFO 4 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/plasmashell -1 / 8 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 4 MYFIFO 3 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 5 MYFIFO 3 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/plasmashell -1 / 8 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/home/anna/Desktop/bpftrace/IPC/shmcreate 3 /lib64/libc.so.6 832 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/bash 3  0 5
+/home/anna/Desktop/bpftrace/IPC/shmwrite 3 /lib64/libc.so.6 832 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/VBoxClient 8 /run/user/1000/xauth_BkPaXD 111 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/home/anna/Desktop/bpftrace/IPC/shmread 3 /lib64/libc.so.6 832 0
+/snapshot/usr/bin/X 64 /usr/bin/VBoxClient 31 0
+/snapshot/usr/bin/bash 3  0 3
+/home/anna/Desktop/bpftrace/IPC/shmrmid 3 /lib64/libc.so.6 832 0
