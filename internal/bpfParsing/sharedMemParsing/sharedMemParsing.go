@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-//----------------------------------------------------------------
-
 type SharedMemInfo struct {
 	Ipc, Key, Id, Type string
 }

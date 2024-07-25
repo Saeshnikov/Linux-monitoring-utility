@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-//----------------------------------------------------------------
-
 type SemaphoreInfo struct {
 	Ipc, Id string
 }
