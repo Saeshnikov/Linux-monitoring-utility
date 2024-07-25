@@ -1,0 +1,21 @@
+Attaching 5 probes...
+
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2 
+/home/anna/Desktop/bpftrace/IPC/semtest 18446744073709551615 2
+
+/home/anna/Desktop/bpftrace/IPC/semtest1 18446744073709551615 2
