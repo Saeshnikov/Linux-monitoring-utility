@@ -12,7 +12,7 @@ var (
 	immutablePieces = map[string]string{
 		"partFullPath": "",
 
-		"fsorwHeader":    "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#endif\n\n",
+		"fsorwHeader":    "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#include <linux/mm.h>\n#endif\n\n",
 		"filter":         "\n/@oldname[tid]/",
 		"openToHandleAt": "\ntracepoint:syscalls:sys_exit_name_to_handle_at\n/@name[tid]/\n{\n\t$ret = args->ret;\n\t@fdHandle[tid] = $ret >= 0 ? $ret : -1;\n}\ntracepoint:syscalls:sys_enter_open_by_handle_at\n/@fdHandle[tid]/\n{\n\t@filename[tid] = @name[tid];\n\tdelete(@fdHandle[tid]);\n}\n",
 		"openEnd":        "\n/@filename[tid]/\n{\n\t$ret = args->ret;\n\t@fd[tid] = $ret >= 0 ? $ret : -1;\n}\n",

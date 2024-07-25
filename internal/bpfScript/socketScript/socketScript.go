@@ -12,7 +12,7 @@ var (
 	immutablePieces = map[string]string{
 		"partFullPath": "",
 
-		"sockHeader":       "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#include <linux/socket.h>\n#include <net/sock.h>\n#else\n#include <sys/socket.h>\n#endif\n",
+		"sockHeader":       "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#include <linux/mm.h>\n#include <linux/socket.h>\n#include <net/sock.h>\n#else\n#include <sys/socket.h>\n#endif\n",
 		"sockConnectStart": "\ntracepoint:syscalls:sys_enter_connect\n{\n\t$sk = ((struct sockaddr *) args->uservaddr);\n\t@inet_family1[tid] = $sk->sa_family;\n\t@fd1[tid] = args->fd;\n}\n\ntracepoint:syscalls:sys_exit_connect\n/@fd1[tid]/\n{\n\t",
 		"sockConnectEnd":   "\t}\n\tdelete(@fd1[tid]);\n\tdelete(@inet_family1[tid]);\n}\n",
 		"sockIfConnect":    "$ret = args->ret;\n\tif ($ret == 0) {\n",

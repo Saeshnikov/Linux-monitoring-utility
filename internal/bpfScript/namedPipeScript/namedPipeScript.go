@@ -12,7 +12,7 @@ var (
 	immutablePieces = map[string]string{
 		"partFullPath": "",
 
-		"pipeHeader":    "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#endif\n\n",
+		"pipeHeader":    "#ifndef BPFTRACE_HAVE_BTF\n#include <linux/sched.h>\n#include <linux/mm.h>\n#endif\n\n",
 		"pipeStart":     "tracepoint:syscalls:sys_enter_mknod,\ntracepoint:syscalls:sys_enter_mknodat\n{\n\tif ((args->mode & 0170000) == 0010000) {\n\t\t@pipename[tid] = args->filename;\n\t}\n}\n",
 		"pipeOpenStart": "\n/@pipename[tid]/\n{\n\t$ret = args->ret;\n\t$fd = $ret >= 0 ? $ret : -1;\n\t$errno = $ret >= 0 ? 0 : - $ret;\n\n\t",
 		"pipeOpenEnd":   "printf(" + `"%` + `d %` + `s"` + ", $fd, str(@pipename[tid]));\n}\n\n",
