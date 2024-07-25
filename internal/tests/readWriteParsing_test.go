@@ -22,7 +22,7 @@ func TestParseReadWrite(t *testing.T) {
 		args        args
 		expectedArr []parsingstruct.ParsingData
 	}{
-		{"Basic test", args{"./data/testReadWrite.txt"}, ParsedDataExample},
+		{"Basic test", args{"./data/readWriteParsingTest.txt"}, ParsedDataExample},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
