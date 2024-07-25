@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-//----------------------------------------------------------------
-
 type ReadWriteInfo struct {
 	Ipc, PathOfOpenedFile, ReadBytes, WrittenBytes string
 }
