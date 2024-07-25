@@ -21,7 +21,7 @@ func TestParseSharedMem(t *testing.T) {
 		args        args
 		expectedArr []parsingstruct.ParsingData
 	}{
-		{"Basic test", args{"./data/testSharedMem.txt"}, ParsedDataExample},
+		{"Basic test", args{"./data/sharedMemParsingTest.txt"}, ParsedDataExample},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
