@@ -11,20 +11,20 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	bpfConfigFileName := "../tests/data/invalidBpfCfg.yaml"
-	yamlFile, err := os.ReadFile(bpfConfigFileName)
+	configFileName := "../tests/data/invalidCfg.yaml"
+	yamlFile, err := os.ReadFile(configFileName)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	var bpfCfg config.BpfTraceConfig
+	var bpfCfg config.ConfigFile
 	err = yaml.Unmarshal(yamlFile, &bpfCfg)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	_, err = bpfScript.GenerateBpfScript(bpfCfg, "", 2)
+	_, err = bpfScript.GenerateBpfScript(bpfCfg.BpfTraceConfig, "", 2)
 	if err == nil {
-		t.Fatal("BpfScriptLayer accepted invalid config file.")
+		t.Fatal("BpfScriptLayer accepted invalid config.")
 	}
 }
