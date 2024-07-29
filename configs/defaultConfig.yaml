@@ -1,5 +1,6 @@
 scriptTime: 100
 programTime: 3000
+rpmTasks: 1
 SyscallsFileName: "/etc/lmu/lmuSyscalls.yaml"
 outputPath: "."
 lsofBinPath: "/usr/bin/lsof"
@@ -13,3 +14,59 @@ DirToIgnore:
   - /proc/
   - /dev/
   - /sys/
+Syscalls:
+  - ipcType: socket
+    enable: true
+    option:
+      - optionType: sockSyscall
+        options:
+          - accept
+          - connect
+      - optionType: protocol
+        options:
+          - UNIX
+          - INET
+          - INET6
+  - ipcType: namedpipe
+    enable: true
+    option:
+      - optionType: openSyscall
+        options:
+          - execve
+          - execveat
+          - open
+          - openat
+          - openat2
+          - open_tree
+          - statx
+          - fspick
+          - open_by_handle_at
+  - ipcType: fsorw
+    enable: true
+    option:
+      - optionType: openSyscall
+        options:
+          - execve
+          - execveat
+          - open
+          - openat
+          - openat2
+          - open_tree
+          - statx
+          - fspick
+          - open_by_handle_at
+          - readlink
+          - readlinkat
+      - optionType: fsorwSyscall
+        options:
+          - read
+          - write
+  - ipcType: sharedMem
+    enable: true
+    option:
+      - optionType: standards
+        options:
+          - systemV
+          - posix
+  - ipcType: semaphore
+    enable: true
