@@ -11,23 +11,24 @@ import (
 )
 
 type ConfigFile struct {
-	ScriptTime            uint     `yaml:"scriptTime"`
-	ProgramTime           uint     `yaml:"programTime"`
-	SyscallsFileName      string   `yaml:"SyscallsFileName"`
-	OutputPath            string   `yaml:"outputPath"`
-	LsofBinPath           string   `yaml:"lsofBinPath"`
-	RpmBinPath            string   `yaml:"rpmBinPath"`
-	BpftraceBinPath       string   `yaml:"bpftraceBinPath"`
-	TmpPath               string   `yaml:"tmpPath"`
-	TmpDelete             bool     `yaml:"tmpDelete"`
-	BPFTRACE_STRLEN       string   `yaml:"BPFTRACE_STRLEN"`
-	BPFTRACE_MAP_KEYS_MAX string   `yaml:"BPFTRACE_MAP_KEYS_MAX"`
-	DirToIgnore           []string `yaml:"DirToIgnore"`
+	ScriptTime            uint                  `yaml:"scriptTime"`
+	ProgramTime           uint                  `yaml:"programTime"`
+	RpmTasks              uint                  `yaml:"rpmTasks"`
+	OutputPath            string                `yaml:"outputPath"`
+	LsofBinPath           string                `yaml:"lsofBinPath"`
+	RpmBinPath            string                `yaml:"rpmBinPath"`
+	BpftraceBinPath       string                `yaml:"bpftraceBinPath"`
+	TmpPath               string                `yaml:"tmpPath"`
+	TmpDelete             bool                  `yaml:"tmpDelete"`
+	BPFTRACE_STRLEN       string                `yaml:"BPFTRACE_STRLEN"`
+	BPFTRACE_MAP_KEYS_MAX string                `yaml:"BPFTRACE_MAP_KEYS_MAX"`
+	DirToIgnore           []string              `yaml:"DirToIgnore"`
+	BpfTraceConfig        []genStruct.IpcStruct `yaml:"Syscalls"`
 }
 
 func configValidate(configStruct *ConfigFile) error {
 
-	if configStruct.ScriptTime >= configStruct.ProgramTime {
+	if configStruct.ScriptTime != 0 && configStruct.ScriptTime > configStruct.ProgramTime {
 		err := errors.New("script time cannot be more than program time")
 		return err
 	}
@@ -35,15 +36,6 @@ func configValidate(configStruct *ConfigFile) error {
 	//Checking existing of bpftrace bin path
 	if configStruct.BpftraceBinPath != "/usr/bin/bpftrace" {
 		if _, err := os.Stat(configStruct.BpftraceBinPath); errors.Is(err, os.ErrNotExist) {
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	//Checking existing of syscalls file
-	if configStruct.SyscallsFileName != "/etc/lmu/lmuSyscalls.yaml" {
-		if _, err := os.Stat(configStruct.SyscallsFileName); errors.Is(err, os.ErrNotExist) {
 			if err != nil {
 				return err
 			}
@@ -84,19 +76,19 @@ func ConfigRead(configStruct *ConfigFile) ([]genStruct.IpcStruct, error) {
 		return nil, err
 	}
 
-	if cliConf.ScriptTime != 0 {
-
-		configStruct.ScriptTime = cliConf.ScriptTime
-	}
-
 	if cliConf.ProgramTime != 0 {
 
 		configStruct.ProgramTime = cliConf.ProgramTime
 	}
 
-	if len(cliConf.SyscallsFileName) != 0 {
-
-		configStruct.SyscallsFileName = cliConf.SyscallsFileName
+	//Checking if only -T flag provided
+	if cliConf.ScriptTime == 0 {
+		configStruct.ScriptTime = configStruct.ProgramTime
+	} else {
+		configStruct.ScriptTime = cliConf.ScriptTime
+		if cliConf.RpmTasks != 0 {
+			configStruct.RpmTasks = cliConf.RpmTasks
+		}
 	}
 	if len(cliConf.OutputPath) != 0 {
 
@@ -129,20 +121,7 @@ func ConfigRead(configStruct *ConfigFile) ([]genStruct.IpcStruct, error) {
 		return nil, err
 	}
 
-	//Reading syscalls yaml file
-	bpftraceYamlFile, err := os.ReadFile(configStruct.SyscallsFileName)
-	if err != nil {
-		return nil, err
-	}
-
-	var BpfTraceConfig []genStruct.IpcStruct
-
-	err = yaml.Unmarshal(bpftraceYamlFile, &BpfTraceConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return BpfTraceConfig, nil
+	return configStruct.BpfTraceConfig, nil
 }
 
 func configFileRead(configFileName string, configStruct *ConfigFile) error {
@@ -167,7 +146,7 @@ func cliRead(configFileName *string, configStruct *ConfigFile) error {
 	//Reading command line arguments
 	flag.UintVar(&configStruct.ScriptTime, "t", 0, "One bpftrace script working time") //BPFtrace script working time
 	flag.UintVar(&configStruct.ProgramTime, "T", 0, "Program working time")            //Program working time
-	flag.StringVar(&configStruct.SyscallsFileName, "s", "", "Path to .yaml config file with syscalls")
+	flag.UintVar(&configStruct.RpmTasks, "rpmC", 1, "Number of rpm tasks running at the same time")
 	flag.StringVar(&configStruct.OutputPath, "o", "", "Path to the result")
 	flag.StringVar(&configStruct.LsofBinPath, "lsof", "", "Path to the lsof binary")
 	flag.StringVar(&configStruct.BpftraceBinPath, "bpf", "", "Path to the Bpftrace binary")
@@ -177,5 +156,6 @@ func cliRead(configFileName *string, configStruct *ConfigFile) error {
 
 	//Parsing CLI parameters
 	flag.Parse()
+
 	return nil
 }
