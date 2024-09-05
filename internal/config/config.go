@@ -28,13 +28,8 @@ type ConfigFile struct {
 
 func configValidate(configStruct *ConfigFile) error {
 
-	if configStruct.ScriptTime > configStruct.ProgramTime {
+	if configStruct.ScriptTime != 0 && configStruct.ScriptTime > configStruct.ProgramTime {
 		err := errors.New("script time cannot be more than program time")
-		return err
-	}
-
-	if configStruct.ScriptTime == configStruct.ProgramTime {
-		err := errors.New("you should use -T flag only")
 		return err
 	}
 
@@ -81,20 +76,19 @@ func ConfigRead(configStruct *ConfigFile) ([]genStruct.IpcStruct, error) {
 		return nil, err
 	}
 
+	if cliConf.ProgramTime != 0 {
+
+		configStruct.ProgramTime = cliConf.ProgramTime
+	}
+
 	//Checking if only -T flag provided
 	if cliConf.ScriptTime == 0 {
-
-		configStruct.RpmTasks = 1
+		configStruct.ScriptTime = configStruct.ProgramTime
 	} else {
 		configStruct.ScriptTime = cliConf.ScriptTime
 		if cliConf.RpmTasks != 0 {
 			configStruct.RpmTasks = cliConf.RpmTasks
 		}
-	}
-
-	if cliConf.ProgramTime != 0 {
-
-		configStruct.ProgramTime = cliConf.ProgramTime
 	}
 	if len(cliConf.OutputPath) != 0 {
 
