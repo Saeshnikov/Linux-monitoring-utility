@@ -13,12 +13,12 @@ all: install
 
 .PHONY: deps
 deps:
-	go mod download
-	go mod tidy
+	/usr/local/go/bin/go mod download
+	/usr/local/go/bin/go mod tidy
 
 .PHONY: build
 build:
-	go build -o $(GOBUILDPATH)/build/lmu $(CURDIR)/cmd/main.go
+	/usr/local/go/bin/go build -o $(GOBUILDPATH)/build/lmu $(CURDIR)/cmd/main.go
 
 .PHONY: install
 install: install_config install_binary
@@ -26,7 +26,6 @@ install: install_config install_binary
 .PHONY: install_config
 install_config:| $(DESTDIR)/etc/lmu 
 	cp $(CURDIR)/configs/defaultConfig.yaml $(DESTDIR)/etc/lmu/lmuConfig.yaml
-	cp $(CURDIR)/configs/defaultSyscalls.yaml $(DESTDIR)/etc/lmu/lmuSyscalls.yaml
 
 .PHONY: install_binary
 install_binary:| $(DESTDIR)/usr/bin
@@ -42,7 +41,7 @@ $(DESTDIR)/usr/bin:
 
 .PHONY: test
 test:
-	go test $(GOTESTFLAGS) $(CURDIR)/internal/tests
+	/usr/local/go/bin/go test $(GOTESTFLAGS) $(CURDIR)/internal/tests
 
 .PHONY: clean
 clean:
