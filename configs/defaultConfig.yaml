@@ -1,4 +1,4 @@
-scriptTime: 100
+scriptTime: 0
 programTime: 3000
 rpmTasks: 1
 SyscallsFileName: "/etc/lmu/lmuSyscalls.yaml"
