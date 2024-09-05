@@ -1,0 +1,11 @@
+Attaching 7 probes...
+
+/home/anna/Desktop/bpftrace/IPC/shmwrite ffffffff 3080239 systemV
+/home/anna/Desktop/bpftrace/IPC/shmread ffffffff 3080239 systemV
+/home/anna/Desktop/bpftrace/IPC/producer 3 posix 
+/home/anna/Desktop/bpftrace/shm_open/producer 3 posix 
+/snapshot/usr/bin/X 61 posix 
+/home/anna/Desktop/bpftrace/shm_open/producer 3 posix 
+/home/anna/Desktop/bpftrace/shm_open/producer 3 posix 
+/home/anna/Desktop/bpftrace/IPC/producer 3 posix 
+/snapshot/usr/bin/X 61 posix

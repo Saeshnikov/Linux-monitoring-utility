@@ -1,0 +1,20 @@
+Attaching 12 probes...
+
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 3 MYFIFO
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 4 MYFIFO
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 5 MYFIFO
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 6 MYFIFO
+/home/anna/Desktop/bpftrace/pipe/fifoserver.out 7 MYFIFO
+/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo2.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2
+/home/anna/Desktop/bpftrace/pipe/fifo1.out 3 myfifo2

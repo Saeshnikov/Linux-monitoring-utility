@@ -1,0 +1,21 @@
+Attaching 5 probes...
+
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/lib/snapd/snapd C UNIX 3
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/home/anna/Desktop/bpftrace/socket/socket_server A INET 3
+/home/anna/Desktop/bpftrace/socket/socket_client C INET 3
+/snapshot/usr/bin/VBoxClient C UNIX 7
+/snapshot/usr/bin/VBoxClient/c C UNIX 8
